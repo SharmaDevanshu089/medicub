@@ -1,0 +1,41 @@
+# secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.keystore
+*.jks
+google-services.json
+*service-account*.json
+
+# Rust / Tauri
+target/
+**/src-tauri/target/
+**/src-tauri/gen/
+
+# Node / SvelteKit
+node_modules/
+.svelte-kit/
+build/
+dist/
+.vercel/
+.output/
+
+# Android / Gradle
+.gradle/
+**/build/
+local.properties
+*.apk
+*.aab
+.idea/
+*.iml
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# local data
+*.sqlite
+*.sqlite3
+*.db
