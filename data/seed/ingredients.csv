@@ -1,0 +1,13 @@
+id,inn_name,atc_code,class_id,max_daily_dose_mg,source
+ING001,Amlodipine,C08CA01,TC01,10.0,IP/BP/USP standard maximum 10mg daily
+ING002,Telmisartan,C09CA07,TC02,80.0,Standard maximum 80mg daily
+ING003,Metformin,A10BA02,TC04,2000.0,Standard maximum 2000mg-2550mg daily
+ING004,Ramipril,C09AA05,TC03,10.0,Standard maximum 10mg daily
+ING005,Losartan,C09CA01,TC02,100.0,Standard maximum 100mg daily
+ING006,Atorvastatin,C10AA05,TC06,80.0,Standard maximum 80mg daily
+ING007,Glimepiride,A10BB12,TC05,8.0,Standard maximum 8mg daily
+ING008,Atenolol,C07AB03,TC07,100.0,Standard maximum 100mg daily
+ING009,Paracetamol,N02BE01,,4000.0,Standard maximum 4000mg daily
+ING010,Ibuprofen,M01AE01,TC08,2400.0,Standard maximum 2400mg daily
+ING011,Hydrochlorothiazide,C03AA03,,50.0,Standard maximum 50mg daily
+ING012,Cilnidipine,C08CA14,TC01,20.0,Standard maximum 20mg daily

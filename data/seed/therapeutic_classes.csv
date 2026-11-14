@@ -1,0 +1,9 @@
+id,name,avoid_couse,note
+TC01,Calcium Channel Blockers (Dihydropyridine),true,Avoid combining two dihydropyridine CCBs due to severe peripheral edema and hypotension risk
+TC02,Angiotensin II Receptor Blockers (ARBs),true,Avoid dual ARB therapy or combining with ACE inhibitors due to hyperkalemia and renal failure risk
+TC03,ACE Inhibitors,true,Avoid combining with ARBs or direct renin inhibitors
+TC04,Biguanides,false,First-line antidiabetic class
+TC05,Sulfonylureas,false,Insulin secretagogues
+TC06,HMG-CoA Reductase Inhibitors (Statins),false,Lipid lowering agents
+TC07,Beta-Blockers,true,Avoid combining two non-vasodilating beta blockers
+TC08,NSAIDs,true,Avoid concurrent use of multiple systemic NSAIDs due to GI ulceration risk

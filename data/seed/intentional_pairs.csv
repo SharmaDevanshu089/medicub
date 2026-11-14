@@ -1,0 +1,4 @@
+ingredient_a,ingredient_b,note,source
+ING002,ING001,Guideline-recommended fixed-dose combination for stage 2 hypertension (ARB + CCB),ESC/ESH Hypertension Guidelines 2023
+ING003,ING007,Standard combination therapy for type 2 diabetes mellitus (Biguanide + Sulfonylurea),ADA Standards of Care 2024
+ING002,ING011,Common fixed-dose combination (ARB + Thiazide diuretic),ESH Guidelines
