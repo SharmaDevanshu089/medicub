@@ -1,0 +1,1724 @@
+openapi: 3.1.0
+info:
+  title: Medicub API
+  version: 0.1.0
+  description: One patient, one medication record API for Doctor, Patient, and Pharmacy.
+servers:
+  - url: /v1
+    description: Current deployment /v1 base
+paths:
+  /auth/otp/request:
+    post:
+      summary: Request OTP for patient login
+      operationId: requestOtp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone]
+              properties:
+                phone:
+                  type: string
+                  example: "+919876543210"
+      responses:
+        '200':
+          description: OTP requested
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  demo_otp: { type: string, nullable: true }
+
+  /auth/otp/verify:
+    post:
+      summary: Verify OTP and get JWT
+      operationId: verifyOtp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, otp]
+              properties:
+                phone: { type: string }
+                otp: { type: string, example: "123456" }
+      responses:
+        '200':
+          description: Verification success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/ProblemDetails'
+
+  /auth/login:
+    post:
+      summary: Clinician and pharmacist login
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/ProblemDetails'
+
+  /auth/refresh:
+    post:
+      summary: Refresh access token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh]
+              properties:
+                refresh: { type: string }
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  /me:
+    get:
+      summary: Current user profile
+      operationId: getCurrentUser
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Current authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /devices:
+    post:
+      summary: Register device token for FCM push
+      operationId: registerDevice
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [platform, fcm_token]
+              properties:
+                platform:
+                  type: string
+                  enum: [android, web, ios]
+                fcm_token:
+                  type: string
+      responses:
+        '200':
+          description: Device registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  registered: { type: boolean }
+
+  /consents/codes:
+    post:
+      summary: Patient generates time-bound consent code (QR)
+      operationId: createConsentCode
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [scope]
+              properties:
+                scope:
+                  type: array
+                  items:
+                    type: string
+                    enum: [clinic, dispense]
+      responses:
+        '201':
+          description: Consent code created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [code, qr_payload, expires_at]
+                properties:
+                  code: { type: string }
+                  qr_payload: { type: string }
+                  expires_at: { type: string, format: date-time }
+
+  /consents/redeem:
+    post:
+      summary: Clinician or pharmacist redeems consent code
+      operationId: redeemConsentCode
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code: { type: string }
+      responses:
+        '200':
+          description: Consent grant active
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Consent'
+        '400':
+          $ref: '#/components/responses/ProblemDetails'
+
+  /consents:
+    get:
+      summary: List consents for patient
+      operationId: listConsents
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of active/past consents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Consent'
+
+  /consents/{id}/revoke:
+    post:
+      summary: Revoke consent immediately
+      operationId: revokeConsent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Consent revoked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Consent'
+
+  /patients/{id}/summary:
+    get:
+      summary: Patient 360 summary
+      operationId: getPatientSummary
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Patient overview
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientSummary'
+
+  /patients/{id}/regimen:
+    get:
+      summary: Current active medication regimen
+      operationId: getPatientRegimen
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Regimen items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RegimenItem'
+
+  /patients/{id}/timeline:
+    get:
+      summary: Patient longitudinal timeline
+      operationId: getPatientTimeline
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Timeline events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TimelineEvent'
+
+  /patients/{id}/schedule:
+    get:
+      summary: Patient schedule divided into Morning/Noon/Night
+      operationId: getPatientSchedule
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Schedule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientSchedule'
+
+  /patients/{id}/reconciliation:
+    get:
+      summary: Regimen diff since timestamp
+      operationId: getReconciliationDiff
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: since
+          in: query
+          required: false
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: Reconciliation diff
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reconciliation'
+
+  /patients/{id}/context-summary:
+    get:
+      summary: Second-opinion printable one-pager summary with provenance
+      operationId: getContextSummary
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Context summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContextSummary'
+
+  /patients/{id}/fhir-bundle:
+    get:
+      summary: FHIR R4 Bundle export for patient
+      operationId: getFhirBundle
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: FHIR Bundle
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /drugs/search:
+    get:
+      summary: Search drug catalog (generic-first)
+      operationId: searchDrugs
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Drug'
+
+  /drugs/{id}:
+    get:
+      summary: Drug detail
+      operationId: getDrugById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Drug details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Drug'
+
+  /drugs/by-code/{gtin}:
+    get:
+      summary: Drug lookup by barcode/GTIN
+      operationId: getDrugByGtin
+      parameters:
+        - name: gtin
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Drug
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Drug'
+
+  /catalog/export:
+    get:
+      summary: Full catalog export for offline engines
+      operationId: exportCatalog
+      responses:
+        '200':
+          description: Catalog dataset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogExport'
+
+  /prescriptions:
+    post:
+      summary: Create draft prescription
+      operationId: createPrescription
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrescriptionInput'
+      responses:
+        '201':
+          description: Prescription created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prescription'
+
+  /prescriptions/{id}:
+    get:
+      summary: Get prescription details
+      operationId: getPrescription
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Prescription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prescription'
+    put:
+      summary: Update draft prescription
+      operationId: updatePrescription
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrescriptionInput'
+      responses:
+        '200':
+          description: Updated prescription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prescription'
+
+  /prescriptions/{id}/check:
+    post:
+      summary: Dry-run rules check against patient's current regimen
+      operationId: checkPrescription
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Preview flags found by rules engine
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [flags]
+                properties:
+                  flags:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Flag'
+
+  /prescriptions/{id}/decisions:
+    post:
+      summary: Record decision on preview flag before signing
+      operationId: recordPrescriptionDecision
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [flag_id, decision, reason]
+              properties:
+                flag_id: { type: string }
+                decision:
+                  type: string
+                  enum: [intentional, change_planned, dismiss_false_positive, ack]
+                reason: { type: string }
+      responses:
+        '200':
+          description: Decision recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+
+  /prescriptions/{id}/sign:
+    post:
+      summary: Sign prescription. Blocked (409) if HIGH/CRITICAL flags lack decisions.
+      operationId: signPrescription
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Prescription signed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prescription'
+        '409':
+          description: Flags unresolved
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+
+  /prescriptions/by-code/{rx_code}:
+    get:
+      summary: Get prescription by human-readable rx code
+      operationId: getPrescriptionByCode
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: rx_code
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Prescription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prescription'
+
+  /flags:
+    get:
+      summary: List flags inbox
+      operationId: listFlags
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema: { type: string, enum: [open, acknowledged, resolved, escalated] }
+        - name: patient_id
+          in: query
+          required: false
+          schema: { type: string }
+      responses:
+        '200':
+          description: Flags inbox
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Flag'
+
+  /flags/{id}:
+    get:
+      summary: Flag details with evidence and decision history
+      operationId: getFlag
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Flag detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Flag'
+
+  /flags/{id}/decision:
+    post:
+      summary: Record decision on flag by named clinician
+      operationId: recordFlagDecision
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision, reason]
+              properties:
+                decision:
+                  type: string
+                  enum: [intentional, change_planned, dismiss_false_positive, ack]
+                reason: { type: string }
+                superseding_rx_id: { type: string, nullable: true }
+      responses:
+        '200':
+          description: Flag updated with decision
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Flag'
+
+  /dispenses:
+    post:
+      summary: Start dispensing for a prescription
+      operationId: startDispense
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rx_id, facility_id]
+              properties:
+                rx_id: { type: string }
+                facility_id: { type: string }
+      responses:
+        '201':
+          description: Dispense session started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispense'
+
+  /dispenses/{id}:
+    get:
+      summary: Get dispense session details
+      operationId: getDispense
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Dispense session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispense'
+
+  /dispenses/{id}/scan:
+    post:
+      summary: Check scanned product against prescribed item and regimen
+      operationId: scanDispenseItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rx_item_id]
+              properties:
+                rx_item_id: { type: string }
+                code: { type: string }
+                drug_id: { type: string }
+                free_text: { type: string }
+      responses:
+        '200':
+          description: Scan check result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanResult'
+
+  /dispenses/{id}/request-verification:
+    post:
+      summary: Create prescriber-routed verification flag (Approve/Reject card)
+      operationId: requestDispenseVerification
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rx_item_id]
+              properties:
+                rx_item_id: { type: string }
+                note: { type: string }
+      responses:
+        '200':
+          description: Verification card queued to prescriber
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  flag_id: { type: string }
+                  status: { type: string }
+
+  /dispenses/{id}/attest:
+    post:
+      summary: Pharmacist attests equivalent match
+      operationId: attestDispenseItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rx_item_id]
+              properties:
+                rx_item_id: { type: string }
+      responses:
+        '200':
+          description: Attested
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispense'
+
+  /dispenses/{id}/complete:
+    post:
+      summary: Complete dispense session (all items must be attested or approved)
+      operationId: completeDispense
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Dispense completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispense'
+        '400':
+          $ref: '#/components/responses/ProblemDetails'
+
+  /facilities/{id}/inventory/sync:
+    put:
+      summary: Bulk upsert inventory from CSV connector (idempotent by row_hash)
+      operationId: syncInventory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items]
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/InventoryItemInput'
+      responses:
+        '200':
+          description: Sync summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  imported: { type: integer }
+                  updated: { type: integer }
+                  unchanged: { type: integer }
+
+  /inventory/availability:
+    get:
+      summary: Check shop stock availability (in_stock true/false only, no prices or counts)
+      operationId: checkAvailability
+      parameters:
+        - name: drug_ids
+          in: query
+          required: true
+          schema: { type: string }
+        - name: lat
+          in: query
+          required: false
+          schema: { type: number }
+        - name: lng
+          in: query
+          required: false
+          schema: { type: number }
+      responses:
+        '200':
+          description: Availability per shop
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ShopAvailability'
+
+  /dose-events:
+    post:
+      summary: Batch log dose adherence events (idempotent by client_key)
+      operationId: logDoseEvents
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [events]
+              properties:
+                events:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/DoseEventInput'
+      responses:
+        '200':
+          description: Dose events recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  processed: { type: integer }
+
+  /patients/{id}/adherence:
+    get:
+      summary: Adherence statistics and missed doses
+      operationId: getPatientAdherence
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Adherence stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdherenceStats'
+
+  /vitals:
+    post:
+      summary: Batch submit vitals readings with reliability check
+      operationId: submitVitals
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [readings]
+              properties:
+                readings:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/VitalInput'
+      responses:
+        '200':
+          description: Vitals processed with reliability score
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VitalResult'
+
+  /patients/{id}/vitals:
+    get:
+      summary: List vitals series for patient
+      operationId: getPatientVitals
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: kind
+          in: query
+          required: false
+          schema: { type: string, enum: [bp, hr, glucose, sleep] }
+      responses:
+        '200':
+          description: Vitals series
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vital'
+
+  /checkins:
+    post:
+      summary: Log patient arrival at facility
+      operationId: logCheckin
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [facility_id, source]
+              properties:
+                facility_id: { type: string }
+                source: { type: string, enum: [geofence, manual] }
+      responses:
+        '201':
+          description: Checkin logged
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+
+  /facilities/{id}/arrivals:
+    get:
+      summary: Arrivals queue for clinic team
+      operationId: getArrivals
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Queue of arrived patients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ArrivalItem'
+
+  /notifications:
+    get:
+      summary: Poll notifications for current user
+      operationId: getNotifications
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: since
+          in: query
+          required: false
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+
+  /notifications/{id}/read:
+    post:
+      summary: Mark notification as read
+      operationId: markNotificationRead
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Notification marked read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+
+  /audit:
+    get:
+      summary: Retrieve human-readable audit events
+      operationId: getAuditLog
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: patient_id
+          in: query
+          required: false
+          schema: { type: string }
+        - name: entity_type
+          in: query
+          required: false
+          schema: { type: string }
+        - name: entity_id
+          in: query
+          required: false
+          schema: { type: string }
+      responses:
+        '200':
+          description: Audit entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditEntry'
+
+  /audit/verify:
+    get:
+      summary: Recompute and verify tamper-evident hash chain
+      operationId: verifyAuditChain
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, checked]
+                properties:
+                  ok: { type: boolean }
+                  checked: { type: integer }
+                  first_bad_seq: { type: integer, nullable: true }
+
+  /health:
+    get:
+      summary: Health check and database latency
+      operationId: healthCheck
+      responses:
+        '200':
+          description: System health status
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { type: string, example: "ok" }
+                  db_latency_ms: { type: number, nullable: true }
+                  version: { type: string }
+
+  /admin/seed/reset:
+    post:
+      summary: Reset state to seed data (demo mode only)
+      operationId: resetSeedData
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Seed data reset
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    ProblemDetails:
+      description: RFC 7807 problem details error
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+
+  schemas:
+    ProblemDetails:
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        code: { type: string, example: "flags_unresolved" }
+
+    User:
+      type: object
+      required: [id, role, name, phone, email, locale]
+      properties:
+        id: { type: string }
+        role:
+          type: string
+          enum: [patient, doctor, nurse, pharmacist, admin]
+        name: { type: string }
+        phone: { type: string }
+        email: { type: string }
+        locale:
+          type: string
+          enum: [en, hi]
+
+    AuthResponse:
+      type: object
+      required: [access, refresh, user]
+      properties:
+        access: { type: string }
+        refresh: { type: string }
+        user:
+          $ref: '#/components/schemas/User'
+
+    Consent:
+      type: object
+      required: [id, patient_id, grantee_user_id, scope, status, expires_at]
+      properties:
+        id: { type: string }
+        patient_id: { type: string }
+        grantee_user_id: { type: string }
+        grantee_name: { type: string, nullable: true }
+        grantee_role: { type: string, nullable: true }
+        scope:
+          type: array
+          items: { type: string, enum: [clinic, dispense] }
+        status:
+          type: string
+          enum: [active, revoked, expired]
+        created_at: { type: string, format: date-time }
+        expires_at: { type: string, format: date-time }
+        revoked_at: { type: string, format: date-time, nullable: true }
+
+    Ingredient:
+      type: object
+      required: [id, inn_name]
+      properties:
+        id: { type: string }
+        inn_name: { type: string }
+        atc_code: { type: string, nullable: true }
+        class_id: { type: string, nullable: true }
+        max_daily_dose_mg: { type: number, nullable: true }
+        source: { type: string, nullable: true }
+
+    DrugIngredient:
+      type: object
+      required: [name, strength_value, strength_unit]
+      properties:
+        name: { type: string }
+        ingredient_id: { type: string, nullable: true }
+        strength_value: { type: number }
+        strength_unit: { type: string, example: "mg" }
+
+    Drug:
+      type: object
+      required: [id, brand, manufacturer, form, ingredients]
+      properties:
+        id: { type: string }
+        brand: { type: string }
+        manufacturer: { type: string }
+        form: { type: string, example: "tablet" }
+        route: { type: string, nullable: true }
+        gtin: { type: string, nullable: true }
+        image_url: { type: string, nullable: true }
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/DrugIngredient'
+
+    PrescriptionItem:
+      type: object
+      required: [id, drug_id, brand, dose_value, dose_unit, frequency_code, timing, duration_days]
+      properties:
+        id: { type: string }
+        drug_id: { type: string }
+        brand: { type: string }
+        dose_value: { type: number }
+        dose_unit: { type: string }
+        frequency_code:
+          type: string
+          enum: [OD, BD, TDS, QID, HS, SOS]
+        timing:
+          type: array
+          items: { type: string }
+        duration_days: { type: integer }
+        instructions: { type: string, nullable: true }
+
+    PrescriptionInputItem:
+      type: object
+      required: [drug_id, dose_value, dose_unit, frequency_code, timing, duration_days]
+      properties:
+        drug_id: { type: string }
+        dose_value: { type: number }
+        dose_unit: { type: string }
+        frequency_code:
+          type: string
+          enum: [OD, BD, TDS, QID, HS, SOS]
+        timing:
+          type: array
+          items: { type: string }
+        duration_days: { type: integer }
+        instructions: { type: string, nullable: true }
+
+    PrescriptionInput:
+      type: object
+      required: [patient_id, items]
+      properties:
+        patient_id: { type: string }
+        notes: { type: string, nullable: true }
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PrescriptionInputItem'
+
+    Prescription:
+      type: object
+      required: [id, rx_code, patient_id, prescriber_id, prescriber_name, status, items]
+      properties:
+        id: { type: string }
+        rx_code: { type: string }
+        patient_id: { type: string }
+        prescriber_id: { type: string }
+        prescriber_name: { type: string }
+        facility_id: { type: string, nullable: true }
+        status:
+          type: string
+          enum: [draft, signed, superseded, cancelled]
+        notes: { type: string, nullable: true }
+        signed_at: { type: string, format: date-time, nullable: true }
+        content_hash: { type: string, nullable: true }
+        supersedes_id: { type: string, nullable: true }
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PrescriptionItem'
+
+    RegimenItem:
+      type: object
+      required: [id, patient_id, drug_id, brand, dose, frequency, timing, prescriber_name, status, started_on]
+      properties:
+        id: { type: string }
+        patient_id: { type: string }
+        drug_id: { type: string }
+        brand: { type: string }
+        dose: { type: string }
+        frequency: { type: string }
+        timing:
+          type: array
+          items: { type: string }
+        prescriber_name: { type: string }
+        prescriber_id: { type: string, nullable: true }
+        source_rx_id: { type: string, nullable: true }
+        status:
+          type: string
+          enum: [active, stopped, on_hold]
+        started_on: { type: string, format: date-time }
+        ended_on: { type: string, format: date-time, nullable: true }
+
+    FlagDecision:
+      type: object
+      required: [id, decided_by, decider_name, decision, reason, created_at]
+      properties:
+        id: { type: string }
+        decided_by: { type: string }
+        decider_name: { type: string }
+        decision:
+          type: string
+          enum: [intentional, change_planned, dismiss_false_positive, ack]
+        reason: { type: string }
+        superseding_rx_id: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    Flag:
+      type: object
+      required: [id, patient_id, rule_id, type, severity, status, evidence, explain_clinician_en, explain_patient_en, explain_patient_hi, route_to_role, created_at]
+      properties:
+        id: { type: string }
+        patient_id: { type: string }
+        rule_id: { type: string, example: "R-DUP-001" }
+        rule_version: { type: string, nullable: true }
+        type:
+          type: string
+          enum: [duplicate_ingredient, therapeutic_duplication, interaction, daily_dose_exceeded, substitution_mismatch, unknown_product, reconciliation_gap, unreliable_reading]
+        severity:
+          type: string
+          enum: [critical, high, moderate, low, info]
+        status:
+          type: string
+          enum: [open, acknowledged, resolved_intentional, resolved_change, dismissed_false_positive, escalated]
+        evidence:
+          type: object
+        explain_clinician_en: { type: string }
+        explain_patient_en: { type: string }
+        explain_patient_hi: { type: string }
+        route_to_role:
+          type: string
+          enum: [doctor, nurse, pharmacist, patient]
+        assigned_to_user: { type: string, nullable: true }
+        respond_by: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+        decisions:
+          type: array
+          items:
+            $ref: '#/components/schemas/FlagDecision'
+
+    DrugCard:
+      type: object
+      required: [drug_id, brand, manufacturer, form, ingredients]
+      properties:
+        drug_id: { type: string }
+        brand: { type: string }
+        manufacturer: { type: string }
+        form: { type: string }
+        image_url: { type: string, nullable: true }
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/DrugIngredient'
+
+    ScanResult:
+      type: object
+      required: [result, flags, reference]
+      properties:
+        result:
+          type: string
+          enum: [equivalent_candidate, mismatch, unknown, duplicate, interaction]
+        matched_drug_id: { type: string, nullable: true }
+        differences:
+          type: array
+          items: { type: string }
+        flags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Flag'
+        reference:
+          type: object
+          required: [prescribed]
+          properties:
+            prescribed:
+              $ref: '#/components/schemas/DrugCard'
+            scanned:
+              anyOf:
+                - $ref: '#/components/schemas/DrugCard'
+                - type: 'null'
+
+    DispenseItem:
+      type: object
+      required: [id, rx_item_id, result]
+      properties:
+        id: { type: string }
+        rx_item_id: { type: string }
+        scanned_drug_id: { type: string, nullable: true }
+        scanned_code: { type: string, nullable: true }
+        result:
+          type: string
+          enum: [equivalent_candidate, mismatch, unknown, duplicate, interaction]
+        attested_by: { type: string, nullable: true }
+        flag_id: { type: string, nullable: true }
+
+    Dispense:
+      type: object
+      required: [id, rx_id, facility_id, pharmacist_id, status, items]
+      properties:
+        id: { type: string }
+        rx_id: { type: string }
+        facility_id: { type: string }
+        pharmacist_id: { type: string }
+        status:
+          type: string
+          enum: [in_progress, blocked, completed]
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DispenseItem'
+        created_at: { type: string, format: date-time }
+        completed_at: { type: string, format: date-time, nullable: true }
+
+    InventoryItemInput:
+      type: object
+      required: [sku_name, batch_no, expiry_on, qty, mrp]
+      properties:
+        drug_id: { type: string, nullable: true }
+        sku_name: { type: string }
+        batch_no: { type: string }
+        expiry_on: { type: string }
+        qty: { type: integer }
+        mrp: { type: number }
+        row_hash: { type: string, nullable: true }
+
+    ShopAvailability:
+      type: object
+      required: [facility_id, facility_name, in_stock]
+      properties:
+        facility_id: { type: string }
+        facility_name: { type: string }
+        in_stock: { type: boolean }
+        lat: { type: number, nullable: true }
+        lng: { type: number, nullable: true }
+
+    DoseEventInput:
+      type: object
+      required: [regimen_item_id, scheduled_at, status, client_key]
+      properties:
+        regimen_item_id: { type: string }
+        scheduled_at: { type: string, format: date-time }
+        status:
+          type: string
+          enum: [taken, missed, skipped, snoozed]
+        client_key: { type: string }
+
+    AdherenceStats:
+      type: object
+      required: [total_scheduled, taken_count, missed_count, adherence_percentage]
+      properties:
+        total_scheduled: { type: integer }
+        taken_count: { type: integer }
+        missed_count: { type: integer }
+        adherence_percentage: { type: number }
+
+    VitalInput:
+      type: object
+      required: [kind, value, device_class, measured_at, client_key]
+      properties:
+        kind:
+          type: string
+          enum: [bp, hr, glucose, sleep]
+        value: { type: object }
+        device_class:
+          type: string
+          enum: [validated_cuff, manual, wearable_estimate]
+        measured_at: { type: string, format: date-time }
+        tz_offset_min: { type: integer, default: 0 }
+        checklist: { type: object, nullable: true }
+        client_key: { type: string }
+
+    VitalResult:
+      type: object
+      required: [id, reliability_score, alert_eligible, recheck_recommended]
+      properties:
+        id: { type: string }
+        reliability_score: { type: integer }
+        alert_eligible: { type: boolean }
+        recheck_recommended: { type: boolean }
+
+    Vital:
+      type: object
+      required: [id, kind, value, device_class, measured_at]
+      properties:
+        id: { type: string }
+        kind: { type: string }
+        value: { type: object }
+        device_class: { type: string }
+        measured_at: { type: string, format: date-time }
+        reliability_score: { type: integer, nullable: true }
+
+    ArrivalItem:
+      type: object
+      required: [patient_id, patient_name, arrived_at, source]
+      properties:
+        patient_id: { type: string }
+        patient_name: { type: string }
+        arrived_at: { type: string, format: date-time }
+        source: { type: string }
+
+    Notification:
+      type: object
+      required: [id, kind, title_key, payload, created_at]
+      properties:
+        id: { type: string }
+        kind:
+          type: string
+          enum: [RX_SIGNED, CONSENT_GRANTED, CONSENT_REVOKED, FLAG_RAISED, FLAG_RESOLVED, DISPENSE_BLOCKED, DISPENSE_READY, PATIENT_ARRIVED, MISSED_DOSE_CAREGIVER]
+        title_key: { type: string }
+        payload: { type: object }
+        created_at: { type: string, format: date-time }
+        read_at: { type: string, format: date-time, nullable: true }
+
+    AuditEntry:
+      type: object
+      required: [seq, actor_name, actor_role, action, sentence, at, entry_hash]
+      properties:
+        seq: { type: integer }
+        actor_name: { type: string }
+        actor_role: { type: string }
+        action: { type: string }
+        entity_type: { type: string }
+        entity_id: { type: string }
+        sentence: { type: string }
+        payload: { type: object }
+        prev_hash: { type: string }
+        entry_hash: { type: string }
+        at: { type: string, format: date-time }
+
+    PatientSummary:
+      type: object
+      required: [patient, regimen, open_flags, adherence]
+      properties:
+        patient:
+          type: object
+        regimen:
+          type: array
+          items:
+            $ref: '#/components/schemas/RegimenItem'
+        open_flags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Flag'
+        latest_vitals:
+          type: array
+          items:
+            $ref: '#/components/schemas/Vital'
+        adherence:
+          $ref: '#/components/schemas/AdherenceStats'
+
+    TimelineEvent:
+      type: object
+      required: [id, timestamp, kind, title, description]
+      properties:
+        id: { type: string }
+        timestamp: { type: string, format: date-time }
+        kind: { type: string }
+        title: { type: string }
+        description: { type: string }
+        actor: { type: string, nullable: true }
+
+    DoseSlot:
+      type: object
+      required: [slot, time, items]
+      properties:
+        slot:
+          type: string
+          enum: [morning, noon, night, bedtime]
+        time: { type: string }
+        items:
+          type: array
+          items:
+            type: object
+            required: [regimen_item_id, brand, dose, instructions, taken]
+            properties:
+              regimen_item_id: { type: string }
+              brand: { type: string }
+              dose: { type: string }
+              instructions: { type: string }
+              taken: { type: boolean }
+
+    PatientSchedule:
+      type: object
+      required: [patient_id, date, slots]
+      properties:
+        patient_id: { type: string }
+        date: { type: string }
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/DoseSlot'
+
+    Reconciliation:
+      type: object
+      required: [added, stopped, changed, unresolved]
+      properties:
+        added:
+          type: array
+          items: { type: object }
+        stopped:
+          type: array
+          items: { type: object }
+        changed:
+          type: array
+          items: { type: object }
+        unresolved:
+          type: array
+          items: { type: object }
+
+    ContextSummary:
+      type: object
+      required: [patient_id, generated_at, sections]
+      properties:
+        patient_id: { type: string }
+        generated_at: { type: string, format: date-time }
+        sections:
+          type: array
+          items:
+            type: object
+            required: [title, lines]
+            properties:
+              title: { type: string }
+              lines:
+                type: array
+                items:
+                  type: object
+                  required: [text, source_ref]
+                  properties:
+                    text: { type: string }
+                    source_ref: { type: string }
+
+    CatalogExport:
+      type: object
+      required: [ingredients, therapeutic_classes, drugs, interactions, intentional_pairs]
+      properties:
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ingredient'
+        therapeutic_classes:
+          type: array
+          items: { type: object }
+        drugs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Drug'
+        interactions:
+          type: array
+          items: { type: object }
+        intentional_pairs:
+          type: array
+          items: { type: object }
