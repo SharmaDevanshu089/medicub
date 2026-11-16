@@ -1,6 +1,7 @@
 package app.medicub.sync.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,6 +13,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
+// Google Material 3 Clinical Palette
+private val ClinicalBg = Color(0xFFF8FAFC)
+private val ClinicalCardBg = Color(0xFFFFFFFF)
+private val ClinicalBorder = Color(0xFFE2E8F0)
+private val ClinicalTextDark = Color(0xFF0F172A)
+private val ClinicalTextMuted = Color(0xFF475569)
+private val ClinicalTextSubtle = Color(0xFF64748B)
+private val GoogleBlue = Color(0xFF1A73E8)
+private val GreenSuccess = Color(0xFF15803D)
+private val GreenBg = Color(0xFFECFDF5)
+private val GreenBorder = Color(0xFFA7F3D0)
+private val AmberWarning = Color(0xFFB45309)
+private val AmberBg = Color(0xFFFFFBEB)
+private val AmberBorder = Color(0xFFFDE68A)
 
 @Composable
 fun BpWizardScreen() {
@@ -41,33 +57,52 @@ fun BpWizardScreen() {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0F172A))
+            .background(ClinicalBg)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item {
-            Text(
-                text = "Guided Blood Pressure Check",
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "Wearable estimates are context only. Only validated cuff readings with high reliability can trigger clinical escalation.",
-                color = Color(0xFF94A3B8),
-                fontSize = 12.sp,
-                modifier = Modifier.padding(top = 4.dp)
-            )
+            Card(
+                colors = CardDefaults.cardColors(containerColor = ClinicalCardBg),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, ClinicalBorder, RoundedCornerShape(12.dp))
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Guided Blood Pressure Protocol",
+                        color = ClinicalTextDark,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Safety Invariant #4: Wearable estimates are clinical context only. Only validated upper-arm cuff readings with reliability ≥ 70 can trigger acute escalation.",
+                        color = ClinicalTextMuted,
+                        fontSize = 12.sp,
+                        lineHeight = 17.sp
+                    )
+                }
+            }
         }
 
         // Checklist Items
         item {
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
-                shape = RoundedCornerShape(10.dp)
+                colors = CardDefaults.cardColors(containerColor = ClinicalCardBg),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, ClinicalBorder, RoundedCornerShape(12.dp))
             ) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Pre-Measurement Reliability Checklist:", color = Color(0xFF38BDF8), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "Pre-Measurement Reliability Checklist",
+                        color = GoogleBlue,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
 
                     ChecklistItem("Seated with back supported & feet flat (+20)", seated) { seated = it }
                     ChecklistItem("Rested quietly for 5+ minutes (+20)", rested) { rested = it }
@@ -75,7 +110,7 @@ fun BpWizardScreen() {
                     ChecklistItem("No caffeine, smoking, or exercise in last 30m (+15)", noCaffeine) { noCaffeine = it }
                     ChecklistItem("Correct cuff placement on bare upper arm (+10)", cuffPlaced) { cuffPlaced = it }
                     ChecklistItem("Validated upper arm cuff (not wearable) (+10)", validatedDevice) { validatedDevice = it }
-                    ChecklistItem("Two readings 1 minute apart (+10)", consistentSecond) { consistentSecond = it }
+                    ChecklistItem("Two readings taken 1 minute apart (+10)", consistentSecond) { consistentSecond = it }
                 }
             }
         }
@@ -84,26 +119,37 @@ fun BpWizardScreen() {
         item {
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = if (isAlertEligible) Color(0x3322C55E) else Color(0x33F97316)
+                    containerColor = if (isAlertEligible) GreenBg else AmberBg
                 ),
-                shape = RoundedCornerShape(10.dp)
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.5.dp, if (isAlertEligible) GreenBorder else AmberBorder, RoundedCornerShape(12.dp))
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
-                        Text("Reading Reliability Score", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Measurement Reliability",
+                            color = ClinicalTextDark,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
                         Text(
                             text = if (isAlertEligible) "✓ Alert-Eligible Clinical Reading" else "⚠️ Reliability below 70 - Re-measure Recommended",
-                            color = if (isAlertEligible) Color(0xFF22C55E) else Color(0xFFF97316),
-                            fontSize = 12.sp
+                            color = if (isAlertEligible) GreenSuccess else AmberWarning,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
                         )
                     }
                     Text(
                         text = "$score / 100",
-                        color = if (isAlertEligible) Color(0xFF22C55E) else Color(0xFFF97316),
+                        color = if (isAlertEligible) GreenSuccess else AmberWarning,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -114,12 +160,18 @@ fun BpWizardScreen() {
         // Submit reading button
         item {
             Button(
-                onClick = { /* In production: Submit vitals with reliability score to /v1/vitals */ },
-                modifier = Modifier.fillMaxWidth().height(48.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0284C7)),
+                onClick = { /* Submit vitals with reliability score to /v1/vitals */ },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = GoogleBlue),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text("Log Reading ($systolic / $diastolic mmHg)", fontWeight = FontWeight.Bold)
+                Text(
+                    text = "Record Validated Cuff Reading ($systolic / $diastolic mmHg)",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
             }
         }
     }
@@ -132,11 +184,19 @@ fun ChecklistItem(label: String, checked: Boolean, onCheckedChange: (Boolean) ->
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, color = Color(0xFFF8FAFC), fontSize = 13.sp, modifier = Modifier.weight(1f))
+        Text(
+            text = label,
+            color = ClinicalTextDark,
+            fontSize = 13.sp,
+            modifier = Modifier.weight(1f)
+        )
         Checkbox(
             checked = checked,
             onCheckedChange = onCheckedChange,
-            colors = CheckboxDefaults.colors(checkedColor = Color(0xFF0284C7))
+            colors = CheckboxDefaults.colors(
+                checkedColor = GoogleBlue,
+                checkmarkColor = Color.White
+            )
         )
     }
 }

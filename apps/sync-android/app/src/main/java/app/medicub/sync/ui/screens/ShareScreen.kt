@@ -16,6 +16,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.medicub.sync.R
 
+// Google Material 3 Clinical Palette
+private val ClinicalBg = Color(0xFFF8FAFC)
+private val ClinicalCardBg = Color(0xFFFFFFFF)
+private val ClinicalBorder = Color(0xFFE2E8F0)
+private val ClinicalTextDark = Color(0xFF0F172A)
+private val ClinicalTextMuted = Color(0xFF475569)
+private val GoogleBlue = Color(0xFF1A73E8)
+private val CrimsonRevoke = Color(0xFFB91C1C)
+
 @Composable
 fun ShareScreen(
     onTriggerBiometric: () -> Unit
@@ -27,33 +36,49 @@ fun ShareScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0F172A))
+            .background(ClinicalBg)
             .padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = stringResource(R.string.share_title),
-            color = Color.White,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Card(
+            colors = CardDefaults.cardColors(containerColor = ClinicalCardBg),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, ClinicalBorder, RoundedCornerShape(12.dp))
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = stringResource(R.string.share_title),
+                    color = ClinicalTextDark,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
 
-        Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
-        Text(
-            text = stringResource(R.string.share_instruction),
-            color = Color(0xFF94A3B8),
-            fontSize = 13.sp,
-            textAlign = TextAlign.Center
-        )
+                Text(
+                    text = stringResource(R.string.share_instruction),
+                    color = ClinicalTextMuted,
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 18.sp
+                )
+            }
+        }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         // Dynamic 5-minute QR Code Container
         Card(
             colors = CardDefaults.cardColors(containerColor = Color.White),
             shape = RoundedCornerShape(16.dp),
-            modifier = Modifier.size(240.dp)
+            modifier = Modifier
+                .size(240.dp)
+                .border(1.5.dp, ClinicalBorder, RoundedCornerShape(16.dp))
         ) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -64,19 +89,19 @@ fun ShareScreen(
                         text = "📱 [QR CODE]",
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0F172A)
+                        color = ClinicalTextDark
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "medicub://consent/7K2M9Q",
-                        color = Color(0xFF0284C7),
+                        color = GoogleBlue,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Valid for: 4m 32s",
-                        color = Color(0xFFE11D48),
+                        text = if (!isRevoked) "Valid for: 4m 32s" else "TOKEN REVOKED",
+                        color = if (!isRevoked) CrimsonRevoke else ClinicalTextMuted,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -84,48 +109,55 @@ fun ShareScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        // Active Grants List
+        // Consent Scope Controls
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
-            shape = RoundedCornerShape(10.dp),
-            modifier = Modifier.fillMaxWidth()
+            colors = CardDefaults.cardColors(containerColor = ClinicalCardBg),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, ClinicalBorder, RoundedCornerShape(12.dp))
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = stringResource(R.string.active_consents),
-                    color = Color(0xFF38BDF8),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
+                    text = "Grant Consent To:",
+                    color = ClinicalTextDark,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                if (!isRevoked) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text("Dr. Arjun Rao (Clinic View)", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                            Text("Active until 7:40 PM", color = Color(0xFF94A3B8), fontSize = 12.sp)
-                        }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = consentScope == "clinic",
+                        onClick = { consentScope = "clinic" },
+                        label = { Text("Clinic (30 days)") }
+                    )
+                    FilterChip(
+                        selected = consentScope == "pharmacy",
+                        onClick = { consentScope = "pharmacy" },
+                        label = { Text("Pharmacy (Dispense only)") }
+                    )
+                }
 
-                        Button(
-                            onClick = { isRevoked = true },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
-                            shape = RoundedCornerShape(6.dp)
-                        ) {
-                            Text(stringResource(R.string.revoke_access), fontSize = 12.sp)
-                        }
-                    }
-                } else {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = { isRevoked = !isRevoked },
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isRevoked) Color(0xFF64748B) else CrimsonRevoke
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
                     Text(
-                        text = "✓ Access revoked. Doctor can no longer access records.",
-                        color = Color(0xFF22C55E),
-                        fontSize = 13.sp
+                        text = if (isRevoked) "Consent Revoked" else "Revoke Consent Instantly",
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }

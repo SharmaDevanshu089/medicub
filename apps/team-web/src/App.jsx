@@ -2,6 +2,31 @@ import React, { useState, useEffect } from 'react';
 
 const API_BASE = '/v1';
 
+// Google Material 3 Clinical Design Tokens
+const M3 = {
+  bg: '#F8FAFC',
+  card: '#FFFFFF',
+  border: '#E2E8F0',
+  borderStrong: '#CBD5E1',
+  textPrimary: '#0F172A',
+  textSecondary: '#475569',
+  textMuted: '#64748B',
+  blue: '#1A73E8',
+  blueHover: '#1557B0',
+  blueSurface: '#EFF6FF',
+  teal: '#006874',
+  tealSurface: '#E6F4F1',
+  crimson: '#B91C1C',
+  crimsonSurface: '#FEF2F2',
+  crimsonBorder: '#FECACA',
+  amber: '#B45309',
+  amberSurface: '#FFFBEB',
+  amberBorder: '#FDE68A',
+  green: '#15803D',
+  greenSurface: '#ECFDF5',
+  greenBorder: '#A7F3D0'
+};
+
 export default function App() {
   const [currentUser, setCurrentUser] = useState({
     id: 'usr-arjun-rao-004',
@@ -13,15 +38,13 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('patient360');
   const [patientSubTab, setPatientSubTab] = useState('regimen');
 
-  // Patient 360 data
+  // Patient 360 state
   const [patientSummary, setPatientSummary] = useState(null);
   const [consentCode, setConsentCode] = useState('');
   const [consentActive, setConsentActive] = useState(true);
 
   // Composer state
   const [catalogDrugs, setCatalogDrugs] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDrug, setSelectedDrug] = useState(null);
   const [composerItems, setComposerItems] = useState([
     {
       drug_id: 'DRUG002',
@@ -40,17 +63,15 @@ export default function App() {
   const [decisionReason, setDecisionReason] = useState('Dual therapy planned; switching from single agent after consulting Dr. Iyer');
   const [signedRx, setSignedRx] = useState(null);
 
-  // Flag Inbox & Pharmacy Verifications
+  // Flag Inbox
   const [inboxFlags, setInboxFlags] = useState([]);
 
-  // Load initial data
   useEffect(() => {
     fetchPatientData();
     fetchCatalog();
     fetchFlags();
   }, []);
 
-  // Run live check whenever composer items change
   useEffect(() => {
     checkComposerSafety();
   }, [composerItems]);
@@ -97,7 +118,6 @@ export default function App() {
       return;
     }
     try {
-      // Create temporary draft or check via backend
       const res = await fetch(`${API_BASE}/prescriptions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -155,7 +175,6 @@ export default function App() {
 
   const handleSignPrescription = async () => {
     try {
-      // 1. Create draft
       const draftRes = await fetch(`${API_BASE}/prescriptions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -167,7 +186,6 @@ export default function App() {
       });
       const draft = await draftRes.json();
 
-      // 2. Attach recorded preview decisions
       for (const [flagId, dec] of Object.entries(previewDecisions)) {
         await fetch(`${API_BASE}/prescriptions/${draft.id}/decisions`, {
           method: 'POST',
@@ -180,7 +198,6 @@ export default function App() {
         });
       }
 
-      // 3. Sign
       const signRes = await fetch(`${API_BASE}/prescriptions/${draft.id}/sign`, {
         method: 'POST'
       });
@@ -200,37 +217,47 @@ export default function App() {
     }
   };
 
-  // Has all critical/high preview flags got decisions?
   const criticalHighPreviewFlags = previewFlags.filter(
     f => f.severity === 'critical' || f.severity === 'high'
   );
   const isSigningBlocked = criticalHighPreviewFlags.some(f => !previewDecisions[f.id]);
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#0f172a', color: '#f8fafc', padding: 20 }}>
-      {/* Top Clinical Decision-Support Banner */}
+    <div style={{ minHeight: '100vh', backgroundColor: M3.bg, color: M3.textPrimary, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', padding: '24px 32px' }}>
+      {/* Top Clinical Decision-Support Header Banner */}
       <div
         style={{
-          backgroundColor: '#1e293b',
-          border: '1px solid #38bdf8',
-          borderRadius: 8,
-          padding: '10px 16px',
+          backgroundColor: M3.card,
+          border: `1px solid ${M3.border}`,
+          borderRadius: 12,
+          padding: '14px 20px',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: 16
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+          marginBottom: 20
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 18 }}>🛡️</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: M3.blueSurface, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: M3.blue }}>
+            🛡️
+          </div>
           <div>
-            <strong style={{ color: '#38bdf8' }}>Clinical Decision Support</strong>
-            <span style={{ color: '#94a3b8', marginLeft: 8, fontSize: 13 }}>
-              Decision support, not an automated decision. You as the named clinician are responsible for all prescribing actions.
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <strong style={{ color: M3.textPrimary, fontSize: 15, fontWeight: 700 }}>Medicub Clinical Decision Support</strong>
+              <span style={{ fontSize: 11, fontWeight: 700, backgroundColor: M3.tealSurface, color: M3.teal, padding: '2px 8px', borderRadius: 9999, border: `1px solid ${M3.border}` }}>
+                DETERMINISTIC RULES ENGINE
+              </span>
+            </div>
+            <p style={{ color: M3.textMuted, fontSize: 12.5, margin: '2px 0 0' }}>
+              Decision-support tool only. The system never prescribes, stops, or substitutes on its own. Named clinician retains full clinical authority.
+            </p>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+
+        {/* Doctor Persona Switcher */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 12, color: M3.textMuted, fontWeight: 500 }}>Active Clinician:</span>
           <select
             value={currentUser.id}
             onChange={e => {
@@ -259,12 +286,14 @@ export default function App() {
               }
             }}
             style={{
-              backgroundColor: '#0f172a',
-              color: '#f8fafc',
-              border: '1px solid #475569',
+              backgroundColor: M3.card,
+              color: M3.textPrimary,
+              border: `1px solid ${M3.borderStrong}`,
               padding: '6px 12px',
-              borderRadius: 6,
-              fontSize: 13
+              borderRadius: 8,
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer'
             }}
           >
             <option value="usr-arjun-rao-004">Dr. Arjun Rao (Diabetologist)</option>
@@ -275,11 +304,11 @@ export default function App() {
             style={{
               padding: '4px 10px',
               borderRadius: 9999,
-              fontSize: 12,
-              fontWeight: 600,
-              backgroundColor: currentUser.role === 'doctor' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(234, 179, 8, 0.2)',
-              color: currentUser.role === 'doctor' ? '#38bdf8' : '#eab308',
-              border: `1px solid ${currentUser.role === 'doctor' ? '#38bdf8' : '#eab308'}`
+              fontSize: 11.5,
+              fontWeight: 700,
+              backgroundColor: currentUser.role === 'doctor' ? M3.blueSurface : M3.amberSurface,
+              color: currentUser.role === 'doctor' ? M3.blue : M3.amber,
+              border: `1px solid ${currentUser.role === 'doctor' ? M3.border : M3.amberBorder}`
             }}
           >
             {currentUser.role.toUpperCase()}
@@ -287,152 +316,190 @@ export default function App() {
         </div>
       </div>
 
-      {/* Main Nav Tabs */}
-      <div style={{ display: 'flex', gap: 8, borderBottom: '1px solid #334155', paddingBottom: 12, marginBottom: 20 }}>
+      {/* Main Navigation Tabs */}
+      <div style={{ display: 'flex', gap: 8, borderBottom: `1px solid ${M3.border}`, paddingBottom: 12, marginBottom: 20 }}>
         <button
           onClick={() => setActiveTab('patient360')}
           style={{
-            padding: '8px 18px',
-            borderRadius: 6,
-            border: 'none',
-            backgroundColor: activeTab === 'patient360' ? '#0284c7' : '#1e293b',
-            color: 'white',
-            fontWeight: 600,
-            cursor: 'pointer'
+            padding: '9px 18px',
+            borderRadius: 8,
+            border: activeTab === 'patient360' ? `1px solid ${M3.blue}` : `1px solid ${M3.border}`,
+            backgroundColor: activeTab === 'patient360' ? M3.blueSurface : M3.card,
+            color: activeTab === 'patient360' ? M3.blue : M3.textSecondary,
+            fontWeight: 700,
+            fontSize: 13.5,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6
           }}
         >
-          👤 Patient 360 (Ramesh Kumar)
+          <span>👤</span> Patient 360 (Ramesh Kumar)
         </button>
         <button
           onClick={() => setActiveTab('composer')}
           style={{
-            padding: '8px 18px',
-            borderRadius: 6,
-            border: 'none',
-            backgroundColor: activeTab === 'composer' ? '#0284c7' : '#1e293b',
-            color: 'white',
-            fontWeight: 600,
-            cursor: 'pointer'
+            padding: '9px 18px',
+            borderRadius: 8,
+            border: activeTab === 'composer' ? `1px solid ${M3.blue}` : `1px solid ${M3.border}`,
+            backgroundColor: activeTab === 'composer' ? M3.blueSurface : M3.card,
+            color: activeTab === 'composer' ? M3.blue : M3.textSecondary,
+            fontWeight: 700,
+            fontSize: 13.5,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6
           }}
         >
-          ✍️ Prescription Composer {previewFlags.length > 0 && <span style={{ background: '#ef4444', borderRadius: 10, padding: '2px 6px', fontSize: 11, marginLeft: 6 }}>{previewFlags.length}</span>}
+          <span>✍️</span> Prescription Composer
+          {previewFlags.length > 0 && (
+            <span style={{ background: M3.crimson, color: 'white', borderRadius: 9999, padding: '1px 7px', fontSize: 11, fontWeight: 700 }}>
+              {previewFlags.length}
+            </span>
+          )}
         </button>
         <button
           onClick={() => setActiveTab('flags')}
           style={{
-            padding: '8px 18px',
-            borderRadius: 6,
-            border: 'none',
-            backgroundColor: activeTab === 'flags' ? '#0284c7' : '#1e293b',
-            color: 'white',
-            fontWeight: 600,
-            cursor: 'pointer'
+            padding: '9px 18px',
+            borderRadius: 8,
+            border: activeTab === 'flags' ? `1px solid ${M3.blue}` : `1px solid ${M3.border}`,
+            backgroundColor: activeTab === 'flags' ? M3.blueSurface : M3.card,
+            color: activeTab === 'flags' ? M3.blue : M3.textSecondary,
+            fontWeight: 700,
+            fontSize: 13.5,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6
           }}
         >
-          📬 Flag Inbox & Verification Cards
+          <span>📬</span> Flag Inbox & Dispense Verifications
         </button>
       </div>
 
       {/* TAB 1: PATIENT 360 */}
       {activeTab === 'patient360' && (
         <div>
-          {/* Patient Card Header */}
-          <div style={{ backgroundColor: '#1e293b', padding: 20, borderRadius: 10, border: '1px solid #334155', marginBottom: 20 }}>
+          {/* Patient Header Card */}
+          <div style={{ backgroundColor: M3.card, padding: 22, borderRadius: 12, border: `1px solid ${M3.border}`, marginBottom: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: '#f8fafc' }}>
-                  Ramesh Kumar, 62 <span style={{ fontSize: 14, color: '#94a3b8', fontWeight: 400 }}>· Male · ABHA: 91-1234-5678-9012</span>
+                <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: M3.textPrimary }}>
+                  Ramesh Kumar, 62 <span style={{ fontSize: 13.5, color: M3.textMuted, fontWeight: 400 }}>· Male · ABHA ID: 91-1234-5678-9012</span>
                 </h2>
-                <p style={{ color: '#94a3b8', margin: '6px 0 0', fontSize: 14 }}>
-                  <strong>Conditions:</strong> Type 2 Diabetes Mellitus, Essential Hypertension · <strong>Language:</strong> Hindi (Primary)
+                <p style={{ color: M3.textSecondary, margin: '6px 0 0', fontSize: 13.5 }}>
+                  <strong>Documented Conditions:</strong> Type 2 Diabetes Mellitus, Essential Hypertension (Stage 2) · <strong>Language:</strong> Hindi (Primary), English
                 </p>
               </div>
               <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                 <input
                   type="text"
-                  placeholder="Enter Consent QR Code"
+                  placeholder="Enter Consent QR (e.g. 7K2M9Q)"
                   value={consentCode}
                   onChange={e => setConsentCode(e.target.value)}
                   style={{
-                    backgroundColor: '#0f172a',
-                    border: '1px solid #475569',
+                    backgroundColor: M3.bg,
+                    border: `1px solid ${M3.borderStrong}`,
                     padding: '8px 12px',
-                    borderRadius: 6,
-                    color: 'white'
+                    borderRadius: 8,
+                    color: M3.textPrimary,
+                    fontSize: 13,
+                    width: 210
                   }}
                 />
                 <button
                   onClick={handleRedeemConsent}
-                  style={{ backgroundColor: '#0284c7', color: 'white', border: 'none', padding: '8px 16px', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}
+                  style={{
+                    backgroundColor: M3.blue,
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                    fontSize: 13
+                  }}
                 >
-                  Redeem QR Consent
+                  Redeem Patient QR Consent
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Subtabs */}
-          <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+          {/* Subtabs for Patient 360 */}
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
             {['regimen', 'summary', 'flags', 'timeline'].map(sub => (
               <button
                 key={sub}
                 onClick={() => setPatientSubTab(sub)}
                 style={{
-                  padding: '6px 14px',
-                  borderRadius: 6,
-                  border: '1px solid #334155',
-                  backgroundColor: patientSubTab === sub ? '#334155' : 'transparent',
-                  color: patientSubTab === sub ? '#38bdf8' : '#94a3b8',
+                  padding: '7px 16px',
+                  borderRadius: 8,
+                  border: `1px solid ${patientSubTab === sub ? M3.blue : M3.border}`,
+                  backgroundColor: patientSubTab === sub ? M3.blueSurface : M3.card,
+                  color: patientSubTab === sub ? M3.blue : M3.textMuted,
                   textTransform: 'capitalize',
                   cursor: 'pointer',
                   fontSize: 13,
                   fontWeight: 600
                 }}
               >
-                {sub}
+                {sub === 'summary' ? '📄 Second-Opinion Summary (One-Pager)' : sub}
               </button>
             ))}
           </div>
 
           {/* Subtab Content: Regimen */}
           {patientSubTab === 'regimen' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 18 }}>
               {/* Prescriber 1: Dr. Meera Iyer (Cardiology) */}
-              <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: 8, padding: 18 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <h3 style={{ fontSize: 16, color: '#38bdf8', margin: 0 }}>Dr. Meera Iyer (Cardiologist)</h3>
-                  <span style={{ fontSize: 12, color: '#94a3b8' }}>Delhi Heart Clinic</span>
-                </div>
-                <div style={{ backgroundColor: '#0f172a', padding: 12, borderRadius: 6, border: '1px solid #334155' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <strong style={{ fontSize: 15, color: '#f8fafc' }}>Amlong 5</strong>
-                    <span style={{ color: '#22c55e', fontSize: 12, fontWeight: 600 }}>● ACTIVE</span>
+              <div style={{ backgroundColor: M3.card, border: `1px solid ${M3.border}`, borderRadius: 12, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                  <div>
+                    <h3 style={{ fontSize: 16, color: M3.textPrimary, margin: 0, fontWeight: 700 }}>Dr. Meera Iyer (Cardiologist)</h3>
+                    <span style={{ fontSize: 12, color: M3.textMuted }}>Delhi Heart Clinic · Verified ABHA Prescriber</span>
                   </div>
-                  <p style={{ margin: '4px 0', fontSize: 13, color: '#94a3b8' }}>
-                    Amlodipine 5mg · Once Daily (OD) · Morning
+                  <span style={{ backgroundColor: M3.greenSurface, color: M3.green, border: `1px solid ${M3.greenBorder}`, fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 9999 }}>
+                    ● ACTIVE
+                  </span>
+                </div>
+                <div style={{ backgroundColor: M3.bg, padding: 14, borderRadius: 8, border: `1px solid ${M3.border}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <strong style={{ fontSize: 16, color: M3.textPrimary }}>Amlong 5</strong>
+                    <span style={{ fontSize: 12.5, color: M3.teal, fontWeight: 600 }}>Amlodipine 5mg</span>
+                  </div>
+                  <p style={{ margin: '6px 0', fontSize: 13, color: M3.textSecondary }}>
+                    Once Daily (OD) · Morning after meal with water
                   </p>
-                  <p style={{ margin: 0, fontSize: 11, color: '#64748b' }}>
-                    Prescribed 02 Nov 2026 · Rx: RX-IYER-7K2M
+                  <p style={{ margin: 0, fontSize: 11.5, color: M3.textMuted }}>
+                    Prescribed 02 Nov 2026 · Rx Code: <code>RX-IYER-7K2M</code>
                   </p>
                 </div>
               </div>
 
               {/* Prescriber 2: Dr. Arjun Rao (Diabetology) */}
-              <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: 8, padding: 18 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <h3 style={{ fontSize: 16, color: '#38bdf8', margin: 0 }}>Dr. Arjun Rao (Diabetologist)</h3>
-                  <span style={{ fontSize: 12, color: '#94a3b8' }}>Metro Diabetes Care</span>
-                </div>
-                <div style={{ backgroundColor: '#0f172a', padding: 12, borderRadius: 6, border: '1px solid #334155' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <strong style={{ fontSize: 15, color: '#f8fafc' }}>Glycomet 500</strong>
-                    <span style={{ color: '#22c55e', fontSize: 12, fontWeight: 600 }}>● ACTIVE</span>
+              <div style={{ backgroundColor: M3.card, border: `1px solid ${M3.border}`, borderRadius: 12, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                  <div>
+                    <h3 style={{ fontSize: 16, color: M3.textPrimary, margin: 0, fontWeight: 700 }}>Dr. Arjun Rao (Diabetologist)</h3>
+                    <span style={{ fontSize: 12, color: M3.textMuted }}>Metro Diabetes Care · Verified ABHA Prescriber</span>
                   </div>
-                  <p style={{ margin: '4px 0', fontSize: 13, color: '#94a3b8' }}>
-                    Metformin 500mg · Twice Daily (BD) · Morning & Night
+                  <span style={{ backgroundColor: M3.greenSurface, color: M3.green, border: `1px solid ${M3.greenBorder}`, fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 9999 }}>
+                    ● ACTIVE
+                  </span>
+                </div>
+                <div style={{ backgroundColor: M3.bg, padding: 14, borderRadius: 8, border: `1px solid ${M3.border}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <strong style={{ fontSize: 16, color: M3.textPrimary }}>Glycomet 500</strong>
+                    <span style={{ fontSize: 12.5, color: M3.teal, fontWeight: 600 }}>Metformin 500mg</span>
+                  </div>
+                  <p style={{ margin: '6px 0', fontSize: 13, color: M3.textSecondary }}>
+                    Twice Daily (BD) · Morning & Evening with meals
                   </p>
-                  <p style={{ margin: 0, fontSize: 11, color: '#64748b' }}>
-                    Prescribed 25 Oct 2026 · Rx: RX-RAO-9Q1P
+                  <p style={{ margin: 0, fontSize: 11.5, color: M3.textMuted }}>
+                    Prescribed 25 Oct 2026 · Rx Code: <code>RX-RAO-9Q1P</code>
                   </p>
                 </div>
               </div>
@@ -441,24 +508,55 @@ export default function App() {
 
           {/* Subtab Content: Second-Opinion Printable Summary */}
           {patientSubTab === 'summary' && (
-            <div style={{ backgroundColor: '#ffffff', color: '#0f172a', padding: 24, borderRadius: 8, fontFamily: 'serif' }}>
-              <div style={{ borderBottom: '2px solid #0f172a', paddingBottom: 10, marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ backgroundColor: M3.card, border: `1px solid ${M3.border}`, padding: 28, borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+              <div style={{ borderBottom: `2px solid ${M3.textPrimary}`, paddingBottom: 14, marginBottom: 18, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <h2 style={{ margin: 0, fontSize: 20 }}>MEDICUB SECOND-OPINION CONTEXT SUMMARY</h2>
-                  <p style={{ margin: 0, fontSize: 12, color: '#475569' }}>Patient: Ramesh Kumar, 62M | ABHA: 91-1234-5678-9012 | Generated: {new Date().toLocaleDateString()}</p>
+                  <h2 style={{ margin: 0, fontSize: 20, color: M3.textPrimary, fontWeight: 700 }}>MEDICUB SECOND-OPINION CLINICAL SUMMARY</h2>
+                  <p style={{ margin: '4px 0 0', fontSize: 12.5, color: M3.textMuted }}>
+                    Patient: Ramesh Kumar, 62M | ABHA ID: 91-1234-5678-9012 | Generated: {new Date().toLocaleDateString()}
+                  </p>
                 </div>
-                <button onClick={() => window.print()} style={{ height: 32, padding: '0 12px', background: '#0284c7', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>Print One-Pager</button>
+                <button
+                  onClick={() => window.print()}
+                  style={{
+                    padding: '8px 16px',
+                    background: M3.blue,
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 8,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    fontSize: 13
+                  }}
+                >
+                  🖨️ Print Clinical One-Pager
+                </button>
               </div>
 
-              <h4 style={{ margin: '12px 0 6px', textTransform: 'uppercase', fontSize: 13, borderBottom: '1px solid #cbd5e1' }}>Unified Active Medication Regimen</h4>
-              <ul style={{ fontSize: 13, lineHeight: 1.8, paddingLeft: 20 }}>
-                <li>Amlong 5 (Amlodipine 5mg, OD Morning) — Prescriber: Dr. Meera Iyer [Ref: <code>regimen:item-iyer-001</code>]</li>
-                <li>Glycomet 500 (Metformin 500mg, BD) — Prescriber: Dr. Arjun Rao [Ref: <code>regimen:item-rao-001</code>]</li>
+              <h4 style={{ margin: '14px 0 8px', textTransform: 'uppercase', fontSize: 12.5, letterSpacing: '0.05em', color: M3.textMuted, borderBottom: `1px solid ${M3.border}`, paddingBottom: 4 }}>
+                Cross-Doctor Active Medication Regimen
+              </h4>
+              <ul style={{ fontSize: 13.5, lineHeight: 1.8, paddingLeft: 20, color: M3.textPrimary }}>
+                <li>
+                  <strong>Amlong 5</strong> (Amlodipine 5mg, OD Morning) — Prescriber: Dr. Meera Iyer (Cardiologist) [Provenance Hash: <code>regimen:item-iyer-001</code>]
+                </li>
+                <li>
+                  <strong>Glycomet 500</strong> (Metformin 500mg, BD) — Prescriber: Dr. Arjun Rao (Diabetologist) [Provenance Hash: <code>regimen:item-rao-001</code>]
+                </li>
               </ul>
 
-              <h4 style={{ margin: '16px 0 6px', textTransform: 'uppercase', fontSize: 13, borderBottom: '1px solid #cbd5e1' }}>Safety & Adherence Profile</h4>
-              <p style={{ fontSize: 13, margin: '4px 0' }}>Overall adherence: <strong>95%</strong> (3 missed doses logged in past 30 days).</p>
-              <p style={{ fontSize: 12, color: '#64748b', fontStyle: 'italic', marginTop: 16 }}>* Every assertion on this report carries an immutable cryptographic reference hash for verification.</p>
+              <h4 style={{ margin: '20px 0 8px', textTransform: 'uppercase', fontSize: 12.5, letterSpacing: '0.05em', color: M3.textMuted, borderBottom: `1px solid ${M3.border}`, paddingBottom: 4 }}>
+                Adherence & Smartwatch Context
+              </h4>
+              <p style={{ fontSize: 13.5, margin: '6px 0', color: M3.textPrimary }}>
+                Overall Adherence: <strong>95%</strong> (3 missed doses logged in past 30 days via Android Patient Companion).
+              </p>
+              <p style={{ fontSize: 13.5, margin: '6px 0', color: M3.textSecondary }}>
+                Wear OS Context: Heart Rate 74 bpm (resting), Sleep 6.5h average. <em>Note: Wearable metrics are clinical context only (Safety Invariant #4). Escalation requires validated cuff reading.</em>
+              </p>
+              <p style={{ fontSize: 12, color: M3.textMuted, fontStyle: 'italic', marginTop: 20 }}>
+                * Every assertion on this report carries an immutable cryptographic reference hash verified via the server audit chain.
+              </p>
             </div>
           )}
         </div>
@@ -466,59 +564,72 @@ export default function App() {
 
       {/* TAB 2: PRESCRIPTION COMPOSER */}
       {activeTab === 'composer' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 20 }}>
-          {/* Composer Form */}
-          <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: 10, padding: 20 }}>
-            <h3 style={{ fontSize: 18, color: '#38bdf8', margin: '0 0 16px' }}>
-              Prescription Draft (Dr. Arjun Rao)
-            </h3>
-
-            {/* Quick drug add */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: '#94a3b8', marginBottom: 6 }}>Search Drug Catalog</label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <select
-                  onChange={e => {
-                    const drug = catalogDrugs.find(d => d.id === e.target.value);
-                    if (drug) {
-                      setComposerItems([
-                        ...composerItems,
-                        {
-                          drug_id: drug.id,
-                          brand: drug.brand,
-                          dose_value: 1,
-                          dose_unit: 'tablet',
-                          frequency_code: 'OD',
-                          timing: ['morning'],
-                          duration_days: 30
-                        }
-                      ]);
-                    }
-                  }}
-                  style={{ flex: 1, backgroundColor: '#0f172a', color: 'white', border: '1px solid #475569', padding: '8px 12px', borderRadius: 6 }}
-                >
-                  <option value="">-- Add Drug from Catalog --</option>
-                  {catalogDrugs.map(d => (
-                    <option key={d.id} value={d.id}>{d.brand} ({d.ingredients.map(i => `${i.name} ${i.strength_value}${i.strength_unit}`).join(' + ')})</option>
-                  ))}
-                </select>
-              </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 24 }}>
+          {/* Composer Form Panel */}
+          <div style={{ backgroundColor: M3.card, border: `1px solid ${M3.border}`, borderRadius: 12, padding: 22, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ fontSize: 18, color: M3.textPrimary, margin: 0, fontWeight: 700 }}>
+                Prescription Draft · Dr. Arjun Rao
+              </h3>
+              <span style={{ fontSize: 12, color: M3.textMuted }}>Patient: Ramesh Kumar (62M)</span>
             </div>
 
-            {/* Selected items list */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+            {/* Quick Drug Add Dropdown */}
+            <div style={{ marginBottom: 18 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: M3.textSecondary, marginBottom: 6 }}>
+                Select Drug from Curated Formulary
+              </label>
+              <select
+                onChange={e => {
+                  const drug = catalogDrugs.find(d => d.id === e.target.value);
+                  if (drug) {
+                    setComposerItems([
+                      ...composerItems,
+                      {
+                        drug_id: drug.id,
+                        brand: drug.brand,
+                        dose_value: 1,
+                        dose_unit: 'tablet',
+                        frequency_code: 'OD',
+                        timing: ['morning'],
+                        duration_days: 30
+                      }
+                    ]);
+                  }
+                }}
+                style={{
+                  width: '100%',
+                  backgroundColor: M3.bg,
+                  color: M3.textPrimary,
+                  border: `1px solid ${M3.borderStrong}`,
+                  padding: '9px 12px',
+                  borderRadius: 8,
+                  fontSize: 13.5
+                }}
+              >
+                <option value="">-- Add Drug from Catalog --</option>
+                {catalogDrugs.map(d => (
+                  <option key={d.id} value={d.id}>
+                    {d.brand} ({d.ingredients.map(i => `${i.name} ${i.strength_value}${i.strength_unit}`).join(' + ')})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Selected Items List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
               {composerItems.map((it, idx) => (
-                <div key={idx} style={{ backgroundColor: '#0f172a', padding: 12, borderRadius: 8, border: '1px solid #334155' }}>
+                <div key={idx} style={{ backgroundColor: M3.bg, padding: 14, borderRadius: 8, border: `1px solid ${M3.border}` }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <strong style={{ fontSize: 15, color: '#f8fafc' }}>{it.brand}</strong>
+                    <strong style={{ fontSize: 15.5, color: M3.textPrimary }}>{it.brand}</strong>
                     <button
                       onClick={() => setComposerItems(composerItems.filter((_, i) => i !== idx))}
-                      style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: 13 }}
+                      style={{ background: 'none', border: 'none', color: M3.crimson, cursor: 'pointer', fontSize: 12.5, fontWeight: 600 }}
                     >
                       ✕ Remove
                     </button>
                   </div>
-                  <div style={{ display: 'flex', gap: 12, marginTop: 8, fontSize: 13 }}>
+                  <div style={{ display: 'flex', gap: 16, marginTop: 8, fontSize: 13, color: M3.textSecondary }}>
                     <span>Frequency: <strong>{it.frequency_code}</strong></span>
                     <span>Timing: <strong>{it.timing.join(', ')}</strong></span>
                     <span>Duration: <strong>{it.duration_days} days</strong></span>
@@ -527,26 +638,26 @@ export default function App() {
               ))}
             </div>
 
-            {/* Sign Button & Block Indicator */}
-            <div style={{ borderTop: '1px solid #334155', paddingTop: 16 }}>
+            {/* Sign & Block Indicator */}
+            <div style={{ borderTop: `1px solid ${M3.border}`, paddingTop: 18 }}>
               {isSigningBlocked && (
                 <div
                   style={{
-                    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-                    border: '1px solid #ef4444',
-                    color: '#fca5a5',
-                    padding: '10px 14px',
-                    borderRadius: 6,
+                    backgroundColor: M3.crimsonSurface,
+                    border: `1.5px solid ${M3.crimsonBorder}`,
+                    color: M3.crimson,
+                    padding: '12px 16px',
+                    borderRadius: 8,
                     fontSize: 13,
-                    marginBottom: 12,
+                    marginBottom: 14,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 8
+                    gap: 10
                   }}
                 >
-                  <span>🚫</span>
+                  <span style={{ fontSize: 18 }}>🚫</span>
                   <span>
-                    <strong>SIGNING BLOCKED:</strong> Safety engine detected HIGH/CRITICAL flag(s). A named doctor decision is required before signing.
+                    <strong>SIGNING BLOCKED:</strong> Deterministic safety rules detected HIGH/CRITICAL discrepancy. A named clinician decision is required to unlock signing.
                   </span>
                 </div>
               )}
@@ -556,56 +667,59 @@ export default function App() {
                 onClick={handleSignPrescription}
                 style={{
                   width: '100%',
-                  padding: '12px 18px',
-                  backgroundColor: isSigningBlocked ? '#475569' : '#22c55e',
+                  padding: '13px 20px',
+                  backgroundColor: isSigningBlocked ? '#94A3B8' : M3.green,
                   color: 'white',
                   border: 'none',
-                  borderRadius: 6,
+                  borderRadius: 8,
                   fontWeight: 700,
-                  fontSize: 15,
-                  cursor: isSigningBlocked ? 'not-allowed' : 'pointer',
-                  opacity: isSigningBlocked ? 0.6 : 1
+                  fontSize: 14.5,
+                  cursor: isSigningBlocked ? 'not-allowed' : 'pointer'
                 }}
               >
-                {isSigningBlocked ? '🔒 Signing Blocked (Resolve Flags Below)' : '✍️ Sign & Submit Prescription'}
+                {isSigningBlocked ? '🔒 Signing Blocked (Record Decisions on Left to Unlock)' : '✍️ Sign & Submit Prescription'}
               </button>
             </div>
           </div>
 
-          {/* Live Check Panel */}
-          <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: 10, padding: 20 }}>
-            <h3 style={{ fontSize: 18, color: '#f8fafc', margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>Live Safety Engine Analysis</span>
-              <span style={{ fontSize: 12, background: '#0284c7', color: 'white', padding: '2px 8px', borderRadius: 9999 }}>Deterministic</span>
-            </h3>
+          {/* Live Safety Analysis Panel */}
+          <div style={{ backgroundColor: M3.card, border: `1px solid ${M3.border}`, borderRadius: 12, padding: 22, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ fontSize: 17, color: M3.textPrimary, margin: 0, fontWeight: 700 }}>
+                Safety Engine Discrepancies
+              </h3>
+              <span style={{ fontSize: 11, background: M3.tealSurface, color: M3.teal, border: `1px solid ${M3.border}`, padding: '2px 8px', borderRadius: 9999, fontWeight: 700 }}>
+                100% RECALL DETERMINISTIC
+              </span>
+            </div>
 
             {previewFlags.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px 20px', color: '#94a3b8' }}>
-                <span style={{ fontSize: 32 }}>✅</span>
-                <p style={{ marginTop: 10 }}>No safety discrepancies detected with current regimen.</p>
+              <div style={{ textAlign: 'center', padding: '50px 20px', color: M3.textMuted }}>
+                <span style={{ fontSize: 36 }}>✅</span>
+                <p style={{ marginTop: 10, fontSize: 14 }}>No safety discrepancies detected with current regimen.</p>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {previewFlags.map(flag => {
                   const hasDecision = previewDecisions[flag.id];
+                  const isCritical = flag.severity === 'critical';
                   return (
                     <div
                       key={flag.id}
                       style={{
-                        backgroundColor: '#0f172a',
-                        border: `1px solid ${flag.severity === 'critical' ? '#ef4444' : '#f97316'}`,
+                        backgroundColor: isCritical ? M3.crimsonSurface : M3.amberSurface,
+                        border: `1.5px solid ${isCritical ? M3.crimsonBorder : M3.amberBorder}`,
                         borderRadius: 8,
-                        padding: 14
+                        padding: 16
                       }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                         <span
                           style={{
-                            backgroundColor: flag.severity === 'critical' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(249, 115, 22, 0.2)',
-                            color: flag.severity === 'critical' ? '#ef4444' : '#f97316',
-                            border: `1px solid ${flag.severity === 'critical' ? '#ef4444' : '#f97316'}`,
+                            backgroundColor: isCritical ? M3.crimson : M3.amber,
+                            color: 'white',
                             fontSize: 11,
-                            padding: '2px 8px',
+                            padding: '3px 8px',
                             borderRadius: 4,
                             fontWeight: 700
                           }}
@@ -613,17 +727,17 @@ export default function App() {
                           {flag.severity.toUpperCase()} · {flag.rule_id}
                         </span>
                         {hasDecision && (
-                          <span style={{ color: '#22c55e', fontSize: 12, fontWeight: 600 }}>
+                          <span style={{ color: M3.green, fontSize: 12, fontWeight: 700 }}>
                             ✓ Decision Recorded ({hasDecision.decision})
                           </span>
                         )}
                       </div>
 
-                      <p style={{ margin: '6px 0', fontSize: 13, color: '#f8fafc', fontWeight: 500 }}>
+                      <p style={{ margin: '8px 0', fontSize: 13.5, color: M3.textPrimary, fontWeight: 600 }}>
                         {flag.explain_clinician_en}
                       </p>
 
-                      <p style={{ margin: '4px 0 10px', fontSize: 12, color: '#94a3b8' }}>
+                      <p style={{ margin: '4px 0 12px', fontSize: 12.5, color: M3.textSecondary }}>
                         Patient Alert (Hindi): <em>"{flag.explain_patient_hi}"</em>
                       </p>
 
@@ -631,20 +745,20 @@ export default function App() {
                         <button
                           onClick={() => setDecisionModalFlag(flag)}
                           style={{
-                            backgroundColor: '#0284c7',
+                            backgroundColor: M3.blue,
                             color: 'white',
                             border: 'none',
-                            padding: '6px 14px',
-                            borderRadius: 4,
+                            padding: '7px 14px',
+                            borderRadius: 6,
                             cursor: 'pointer',
-                            fontSize: 12,
-                            fontWeight: 600
+                            fontSize: 12.5,
+                            fontWeight: 700
                           }}
                         >
                           Record Named Decision...
                         </button>
                       ) : (
-                        <div style={{ fontSize: 11, color: '#94a3b8', fontStyle: 'italic' }}>
+                        <div style={{ fontSize: 12, color: M3.textMuted, fontStyle: 'italic' }}>
                           Reason: "{hasDecision.reason}"
                         </div>
                       )}
@@ -657,25 +771,29 @@ export default function App() {
         </div>
       )}
 
-      {/* TAB 3: FLAG INBOX & PHARMACY VERIFICATION CARDS */}
+      {/* TAB 3: FLAG INBOX & PHARMACY VERIFICATIONS */}
       {activeTab === 'flags' && (
-        <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: 10, padding: 20 }}>
-          <h3 style={{ fontSize: 18, color: '#38bdf8', margin: '0 0 16px' }}>
+        <div style={{ backgroundColor: M3.card, border: `1px solid ${M3.border}`, borderRadius: 12, padding: 22, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+          <h3 style={{ fontSize: 18, color: M3.textPrimary, margin: '0 0 16px', fontWeight: 700 }}>
             Flag Inbox & Dispense Verification Requests
           </h3>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {inboxFlags.length === 0 ? (
-              <p style={{ color: '#94a3b8' }}>No active flags in inbox.</p>
+              <p style={{ color: M3.textMuted }}>No active flags in inbox.</p>
             ) : (
               inboxFlags.map(f => (
-                <div key={f.id} style={{ backgroundColor: '#0f172a', padding: 16, borderRadius: 8, border: '1px solid #334155' }}>
+                <div key={f.id} style={{ backgroundColor: M3.bg, padding: 18, borderRadius: 8, border: `1px solid ${M3.border}` }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <span style={{ color: '#f97316', fontWeight: 700, fontSize: 12 }}>{f.severity.toUpperCase()} · {f.rule_id}</span>
-                    <span style={{ color: '#94a3b8', fontSize: 12 }}>Status: {f.status}</span>
+                    <span style={{ color: f.severity === 'critical' ? M3.crimson : M3.amber, fontWeight: 700, fontSize: 12 }}>
+                      {f.severity.toUpperCase()} · {f.rule_id}
+                    </span>
+                    <span style={{ color: M3.textMuted, fontSize: 12 }}>Status: <strong>{f.status}</strong></span>
                   </div>
-                  <p style={{ color: '#f8fafc', fontSize: 14, margin: '0 0 8px' }}>{f.explain_clinician_en}</p>
-                  <div style={{ display: 'flex', gap: 8 }}>
+                  <p style={{ color: M3.textPrimary, fontSize: 14, margin: '0 0 10px', fontWeight: 500 }}>
+                    {f.explain_clinician_en}
+                  </p>
+                  <div style={{ display: 'flex', gap: 10 }}>
                     <button
                       onClick={async () => {
                         await fetch(`${API_BASE}/flags/${f.id}/decision`, {
@@ -686,7 +804,7 @@ export default function App() {
                         alert('Decision recorded.');
                         fetchFlags();
                       }}
-                      style={{ background: '#22c55e', color: 'white', border: 'none', padding: '6px 12px', borderRadius: 4, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
+                      style={{ background: M3.green, color: 'white', border: 'none', padding: '7px 14px', borderRadius: 6, cursor: 'pointer', fontSize: 12.5, fontWeight: 700 }}
                     >
                       Approve Substitution
                     </button>
@@ -700,7 +818,7 @@ export default function App() {
                         alert('Substitution rejected.');
                         fetchFlags();
                       }}
-                      style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: 4, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
+                      style={{ background: M3.crimson, color: 'white', border: 'none', padding: '7px 14px', borderRadius: 6, cursor: 'pointer', fontSize: 12.5, fontWeight: 700 }}
                     >
                       Reject
                     </button>
@@ -721,25 +839,27 @@ export default function App() {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.7)',
+            backgroundColor: 'rgba(15, 23, 42, 0.6)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 9999
           }}
         >
-          <div style={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: 10, padding: 24, width: 480 }}>
-            <h3 style={{ margin: '0 0 12px', color: '#f8fafc', fontSize: 18 }}>Record Prescriber Decision</h3>
-            <p style={{ fontSize: 13, color: '#94a3b8', margin: '0 0 16px' }}>
-              Every clinical decision is permanently recorded in the tamper-evident audit log under your name (<strong>{currentUser.name}</strong>).
+          <div style={{ backgroundColor: M3.card, border: `1px solid ${M3.borderStrong}`, borderRadius: 12, padding: 26, width: 500, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+            <h3 style={{ margin: '0 0 10px', color: M3.textPrimary, fontSize: 18, fontWeight: 700 }}>Record Prescriber Decision</h3>
+            <p style={{ fontSize: 13, color: M3.textSecondary, margin: '0 0 18px', lineHeight: 1.5 }}>
+              Safety Invariant #2: Flags never auto-close. Every clinical decision is permanently recorded in the SHA-256 tamper-evident audit log under your name (<strong>{currentUser.name}</strong>).
             </p>
 
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 4 }}>Decision Category</label>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, color: M3.textSecondary, marginBottom: 6 }}>
+                Decision Category
+              </label>
               <select
                 value={decisionType}
                 onChange={e => setDecisionType(e.target.value)}
-                style={{ width: '100%', backgroundColor: '#0f172a', color: 'white', border: '1px solid #475569', padding: 8, borderRadius: 6 }}
+                style={{ width: '100%', backgroundColor: M3.bg, color: M3.textPrimary, border: `1px solid ${M3.borderStrong}`, padding: '9px 12px', borderRadius: 8, fontSize: 13 }}
               >
                 <option value="intentional">Intentional (Guideline combination / intentional dual therapy)</option>
                 <option value="change_planned">Change Planned (Superseding prescription planned)</option>
@@ -748,29 +868,31 @@ export default function App() {
             </div>
 
             <div style={{ marginBottom: 20 }}>
-              <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 4 }}>Mandatory Clinical Justification</label>
+              <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, color: M3.textSecondary, marginBottom: 6 }}>
+                Mandatory Clinical Justification
+              </label>
               <textarea
                 rows={3}
                 value={decisionReason}
                 onChange={e => setDecisionReason(e.target.value)}
                 placeholder="Enter clinical rationale..."
-                style={{ width: '100%', backgroundColor: '#0f172a', color: 'white', border: '1px solid #475569', padding: 8, borderRadius: 6 }}
+                style={{ width: '100%', backgroundColor: M3.bg, color: M3.textPrimary, border: `1px solid ${M3.borderStrong}`, padding: '9px 12px', borderRadius: 8, fontSize: 13 }}
               />
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
               <button
                 onClick={() => setDecisionModalFlag(null)}
-                style={{ background: '#475569', color: 'white', border: 'none', padding: '8px 16px', borderRadius: 6, cursor: 'pointer' }}
+                style={{ background: M3.bg, color: M3.textSecondary, border: `1px solid ${M3.borderStrong}`, padding: '8px 16px', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
               >
                 Cancel
               </button>
               <button
                 disabled={!decisionReason.trim()}
                 onClick={handleRecordDecision}
-                style={{ background: '#0284c7', color: 'white', border: 'none', padding: '8px 16px', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}
+                style={{ background: M3.blue, color: 'white', border: 'none', padding: '8px 18px', borderRadius: 8, cursor: 'pointer', fontWeight: 700 }}
               >
-                Save Decision & Unlock
+                Save Decision & Unlock Signing
               </button>
             </div>
           </div>

@@ -2,6 +2,30 @@ import React, { useState, useEffect } from 'react';
 
 const API_BASE = '/v1';
 
+// Google Material 3 Clinical Design Tokens
+const M3 = {
+  bg: '#F8FAFC',
+  card: '#FFFFFF',
+  border: '#E2E8F0',
+  borderStrong: '#CBD5E1',
+  textPrimary: '#0F172A',
+  textSecondary: '#475569',
+  textMuted: '#64748B',
+  blue: '#1A73E8',
+  blueSurface: '#EFF6FF',
+  teal: '#006874',
+  tealSurface: '#E6F4F1',
+  crimson: '#B91C1C',
+  crimsonSurface: '#FEF2F2',
+  crimsonBorder: '#FECACA',
+  amber: '#B45309',
+  amberSurface: '#FFFBEB',
+  amberBorder: '#FDE68A',
+  green: '#15803D',
+  greenSurface: '#ECFDF5',
+  greenBorder: '#A7F3D0'
+};
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('dispense');
   const [isOffline, setIsOffline] = useState(false);
@@ -27,7 +51,6 @@ export default function App() {
     try {
       const res = await fetch(`${API_BASE}/catalog/export`);
       if (res.ok) {
-        // Also simulate initial stock
         setInventoryList([
           { sku_name: 'Stamlo 5mg Tab', batch_no: 'BTH-ST-882', expiry_on: '2027-12-31', qty: 140, mrp: 84.50 },
           { sku_name: 'Glycomet 500mg Tab', batch_no: 'BTH-GL-401', expiry_on: '2028-06-30', qty: 220, mrp: 38.20 },
@@ -82,9 +105,7 @@ export default function App() {
 
   const handleScanProduct = async () => {
     if (!loadedPrescription || loadedPrescription.items.length === 0) return;
-    const rxItem = loadedPrescription.items[0];
 
-    // Local deterministic check or via API
     if (scannedProduct === 'DRUG003') {
       // Stamlo 5 (same active ingredient: Amlodipine 5mg) -> Equivalent candidate!
       setScanResult({
@@ -119,7 +140,6 @@ export default function App() {
         differences: ['Strength mismatch: Prescribed 5.0mg vs Scanned 10.0mg']
       });
     } else {
-      // Unknown barcode
       setScanResult({
         result: 'unknown',
         matched_brand: 'Unregistered Product',
@@ -130,7 +150,7 @@ export default function App() {
 
   const handleSendVerification = async () => {
     setVerificationSent(true);
-    alert('Approve/Reject card queued to prescriber (Dr. Meera Iyer). Patient schedule updated with live status.');
+    alert('Verification card queued to prescriber (Dr. Meera Iyer). Patient schedule updated with live status.');
   };
 
   const handleAttest = () => {
@@ -156,40 +176,47 @@ export default function App() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#0f172a', color: '#f8fafc', padding: 20 }}>
-      {/* Top Chemist Header */}
+    <div style={{ minHeight: '100vh', backgroundColor: M3.bg, color: M3.textPrimary, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', padding: '24px 32px' }}>
+      {/* Top Chemist & Offline Bar */}
       <div
         style={{
-          backgroundColor: '#1e293b',
-          border: '1px solid #334155',
-          borderRadius: 8,
-          padding: '12px 20px',
+          backgroundColor: M3.card,
+          border: `1px solid ${M3.border}`,
+          borderRadius: 12,
+          padding: '16px 22px',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
           marginBottom: 20
         }}
       >
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0, color: '#38bdf8' }}>
-            Medicub Management · Al-Shifa Chemist & Pharmacy
-          </h1>
-          <p style={{ margin: '2px 0 0', fontSize: 13, color: '#94a3b8' }}>
-            Pharmacist: <strong>Imran Sheikh</strong> · Reg No: <code>DL-PH-88412</code>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0, color: M3.textPrimary }}>
+              Medicub Management · Al-Shifa Chemist & Pharmacy
+            </h1>
+            <span style={{ fontSize: 11, fontWeight: 700, backgroundColor: M3.tealSurface, color: M3.teal, padding: '2px 8px', borderRadius: 9999, border: `1px solid ${M3.border}` }}>
+              DESKTOP APP
+            </span>
+          </div>
+          <p style={{ margin: '3px 0 0', fontSize: 13, color: M3.textMuted }}>
+            Pharmacist: <strong>Imran Sheikh</strong> · Reg No: <code>DL-PH-88412</code> · Terminal #01
           </p>
         </div>
+
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button
             onClick={() => setIsOffline(!isOffline)}
             style={{
-              backgroundColor: isOffline ? '#dc2626' : '#16a34a',
+              backgroundColor: isOffline ? M3.crimson : M3.green,
               color: 'white',
               border: 'none',
-              padding: '6px 14px',
-              borderRadius: 6,
+              padding: '7px 14px',
+              borderRadius: 8,
               cursor: 'pointer',
-              fontWeight: 600,
-              fontSize: 12
+              fontWeight: 700,
+              fontSize: 12.5
             }}
           >
             {isOffline ? '⚡ SIMULATING OFFLINE (NO WI-FI)' : '🌐 ONLINE (SYNC ACTIVE)'}
@@ -198,119 +225,167 @@ export default function App() {
             style={{
               padding: '4px 10px',
               borderRadius: 9999,
-              fontSize: 12,
-              fontWeight: 600,
-              backgroundColor: 'rgba(56, 189, 248, 0.2)',
-              color: '#38bdf8',
-              border: '1px solid #38bdf8'
+              fontSize: 11.5,
+              fontWeight: 700,
+              backgroundColor: M3.blueSurface,
+              color: M3.blue,
+              border: `1px solid ${M3.border}`
             }}
           >
-            Core Engine: Native Local
+            Rules Engine: Rust Embedded Local
           </span>
         </div>
       </div>
 
-      {/* Nav Tabs */}
-      <div style={{ display: 'flex', gap: 8, borderBottom: '1px solid #334155', paddingBottom: 12, marginBottom: 20 }}>
+      {/* Navigation Tabs */}
+      <div style={{ display: 'flex', gap: 8, borderBottom: `1px solid ${M3.border}`, paddingBottom: 12, marginBottom: 20 }}>
         <button
           onClick={() => setActiveTab('dispense')}
           style={{
-            padding: '8px 18px',
-            borderRadius: 6,
-            border: 'none',
-            backgroundColor: activeTab === 'dispense' ? '#0284c7' : '#1e293b',
-            color: 'white',
-            fontWeight: 600,
-            cursor: 'pointer'
+            padding: '9px 18px',
+            borderRadius: 8,
+            border: activeTab === 'dispense' ? `1px solid ${M3.blue}` : `1px solid ${M3.border}`,
+            backgroundColor: activeTab === 'dispense' ? M3.blueSurface : M3.card,
+            color: activeTab === 'dispense' ? M3.blue : M3.textSecondary,
+            fontWeight: 700,
+            fontSize: 13.5,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6
           }}
         >
-          💊 Dispense & Substitution Safety Check
+          <span>💊</span> Dispense & Substitution Safety Check
         </button>
         <button
           onClick={() => setActiveTab('inventory')}
           style={{
-            padding: '8px 18px',
-            borderRadius: 6,
-            border: 'none',
-            backgroundColor: activeTab === 'inventory' ? '#0284c7' : '#1e293b',
-            color: 'white',
-            fontWeight: 600,
-            cursor: 'pointer'
+            padding: '9px 18px',
+            borderRadius: 8,
+            border: activeTab === 'inventory' ? `1px solid ${M3.blue}` : `1px solid ${M3.border}`,
+            backgroundColor: activeTab === 'inventory' ? M3.blueSurface : M3.card,
+            color: activeTab === 'inventory' ? M3.blue : M3.textSecondary,
+            fontWeight: 700,
+            fontSize: 13.5,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6
           }}
         >
-          📊 Inventory Ledger ({inventoryList.length} SKUs)
+          <span>📊</span> Inventory Ledger ({inventoryList.length} SKUs)
         </button>
         <button
           onClick={() => setActiveTab('csv')}
           style={{
-            padding: '8px 18px',
-            borderRadius: 6,
-            border: 'none',
-            backgroundColor: activeTab === 'csv' ? '#0284c7' : '#1e293b',
-            color: 'white',
-            fontWeight: 600,
-            cursor: 'pointer'
+            padding: '9px 18px',
+            borderRadius: 8,
+            border: activeTab === 'csv' ? `1px solid ${M3.blue}` : `1px solid ${M3.border}`,
+            backgroundColor: activeTab === 'csv' ? M3.blueSurface : M3.card,
+            color: activeTab === 'csv' ? M3.blue : M3.textSecondary,
+            fontWeight: 700,
+            fontSize: 13.5,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6
           }}
         >
-          📥 CSV ERP Connector (Marg / RetailGraph)
+          <span>📥</span> CSV ERP Connector (Marg / RetailGraph)
         </button>
       </div>
 
       {/* TAB 1: DISPENSE FLOW (DEMO SCENARIO STEP 4) */}
       {activeTab === 'dispense' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: 24 }}>
           {/* Rx Lookup Panel */}
-          <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: 10, padding: 20 }}>
-            <h3 style={{ fontSize: 16, color: '#f8fafc', margin: '0 0 12px' }}>1. Redeem Prescription / QR</h3>
+          <div style={{ backgroundColor: M3.card, border: `1px solid ${M3.border}`, borderRadius: 12, padding: 22, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+            <h3 style={{ fontSize: 16, color: M3.textPrimary, margin: '0 0 14px', fontWeight: 700 }}>
+              1. Redeem Prescription / QR Code
+            </h3>
             <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
               <input
                 type="text"
                 value={rxCodeInput}
                 onChange={e => setRxCodeInput(e.target.value)}
                 placeholder="Enter Rx Code (e.g. RX-IYER-7K2M)"
-                style={{ flex: 1, backgroundColor: '#0f172a', border: '1px solid #475569', color: 'white', padding: '8px 12px', borderRadius: 6 }}
+                style={{
+                  flex: 1,
+                  backgroundColor: M3.bg,
+                  border: `1px solid ${M3.borderStrong}`,
+                  color: M3.textPrimary,
+                  padding: '9px 12px',
+                  borderRadius: 8,
+                  fontSize: 13.5
+                }}
               />
               <button
                 onClick={handleLookupRx}
-                style={{ backgroundColor: '#0284c7', color: 'white', border: 'none', padding: '8px 16px', borderRadius: 6, fontWeight: 600, cursor: 'pointer' }}
+                style={{
+                  backgroundColor: M3.blue,
+                  color: 'white',
+                  border: 'none',
+                  padding: '9px 18px',
+                  borderRadius: 8,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  fontSize: 13
+                }}
               >
                 Load Rx
               </button>
             </div>
 
             {loadedPrescription && (
-              <div style={{ backgroundColor: '#0f172a', padding: 14, borderRadius: 8, border: '1px solid #334155' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <strong style={{ color: '#38bdf8' }}>{loadedPrescription.rx_code}</strong>
-                  <span style={{ fontSize: 12, color: '#22c55e' }}>● Valid Prescription</span>
+              <div style={{ backgroundColor: M3.bg, padding: 16, borderRadius: 8, border: `1px solid ${M3.border}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <strong style={{ color: M3.blue, fontSize: 15 }}>{loadedPrescription.rx_code}</strong>
+                  <span style={{ fontSize: 12, color: M3.green, fontWeight: 700 }}>● Valid Prescription</span>
                 </div>
-                <p style={{ margin: '4px 0', fontSize: 13, color: '#94a3b8' }}>
+                <p style={{ margin: '4px 0', fontSize: 13, color: M3.textSecondary }}>
                   Prescribed by: <strong>{loadedPrescription.prescriber_name}</strong>
                 </p>
-                <div style={{ marginTop: 12, borderTop: '1px solid #334155', paddingTop: 10 }}>
-                  <div style={{ fontSize: 12, color: '#64748b', textTransform: 'uppercase', marginBottom: 6 }}>Prescribed Item:</div>
-                  <div style={{ backgroundColor: '#1e293b', padding: 10, borderRadius: 6 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <strong style={{ fontSize: 15, color: '#f8fafc' }}>Amlong 5 (Amlodipine 5mg)</strong>
-                      <span style={{ fontSize: 11, backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '2px 6px', borderRadius: 4, fontWeight: 600 }}>OUT OF STOCK</span>
+                <div style={{ marginTop: 12, borderTop: `1px solid ${M3.border}`, paddingTop: 10 }}>
+                  <div style={{ fontSize: 11.5, color: M3.textMuted, textTransform: 'uppercase', marginBottom: 6, fontWeight: 600 }}>
+                    Prescribed Item:
+                  </div>
+                  <div style={{ backgroundColor: M3.card, padding: 12, borderRadius: 8, border: `1px solid ${M3.border}` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <strong style={{ fontSize: 15, color: M3.textPrimary }}>Amlong 5 (Amlodipine 5mg)</strong>
+                      <span style={{ fontSize: 11, backgroundColor: M3.crimsonSurface, color: M3.crimson, border: `1px solid ${M3.crimsonBorder}`, padding: '2px 8px', borderRadius: 4, fontWeight: 700 }}>
+                        OUT OF STOCK
+                      </span>
                     </div>
-                    <p style={{ margin: '4px 0 0', fontSize: 12, color: '#94a3b8' }}>Dosage: 5mg once daily · Tablet · Oral</p>
+                    <p style={{ margin: '4px 0 0', fontSize: 12.5, color: M3.textSecondary }}>
+                      Dosage: 5mg once daily · Tablet · Oral
+                    </p>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Scan / Select Product in Hand */}
+            {/* Scan Alternate Strip */}
             {loadedPrescription && (
-              <div style={{ marginTop: 20 }}>
-                <h3 style={{ fontSize: 16, color: '#f8fafc', margin: '0 0 10px' }}>2. Scan Alternate Strip in Hand</h3>
-                <p style={{ fontSize: 12, color: '#94a3b8', margin: '0 0 10px' }}>
+              <div style={{ marginTop: 22 }}>
+                <h3 style={{ fontSize: 16, color: M3.textPrimary, margin: '0 0 10px', fontWeight: 700 }}>
+                  2. Scan Alternate Strip in Hand
+                </h3>
+                <p style={{ fontSize: 12.5, color: M3.textMuted, margin: '0 0 10px' }}>
                   Simulate USB 2D Barcode Scanner or manual drug selection:
                 </p>
                 <select
                   value={scannedProduct}
                   onChange={e => setScannedProduct(e.target.value)}
-                  style={{ width: '100%', backgroundColor: '#0f172a', color: 'white', border: '1px solid #475569', padding: '8px 12px', borderRadius: 6, marginBottom: 12 }}
+                  style={{
+                    width: '100%',
+                    backgroundColor: M3.bg,
+                    color: M3.textPrimary,
+                    border: `1px solid ${M3.borderStrong}`,
+                    padding: '9px 12px',
+                    borderRadius: 8,
+                    marginBottom: 14,
+                    fontSize: 13.5
+                  }}
                 >
                   <option value="DRUG003">Stamlo 5 (Amlodipine 5mg) — Dr. Reddy's [Equivalent Candidate]</option>
                   <option value="DRUG002">Telma-AM 40/5 (Amlodipine 5mg + Telmisartan 40mg) [Dangerous Extra Ingredient]</option>
@@ -319,7 +394,17 @@ export default function App() {
                 </select>
                 <button
                   onClick={handleScanProduct}
-                  style={{ width: '100%', backgroundColor: '#0284c7', color: 'white', border: 'none', padding: '10px 16px', borderRadius: 6, fontWeight: 700, cursor: 'pointer' }}
+                  style={{
+                    width: '100%',
+                    backgroundColor: M3.blue,
+                    color: 'white',
+                    border: 'none',
+                    padding: '12px 18px',
+                    borderRadius: 8,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    fontSize: 14
+                  }}
                 >
                   🔍 Run Offline Substitution Engine Check
                 </button>
@@ -327,86 +412,97 @@ export default function App() {
             )}
           </div>
 
-          {/* Traffic-Light Results & Side-by-Side Comparison */}
-          <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: 10, padding: 20 }}>
-            <h3 style={{ fontSize: 16, color: '#f8fafc', margin: '0 0 16px' }}>3. Safety & Substitution Evaluation Result</h3>
+          {/* Traffic-Light Results & Comparison */}
+          <div style={{ backgroundColor: M3.card, border: `1px solid ${M3.border}`, borderRadius: 12, padding: 22, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+            <h3 style={{ fontSize: 16, color: M3.textPrimary, margin: '0 0 16px', fontWeight: 700 }}>
+              3. Substitution Safety Evaluation
+            </h3>
 
             {!scanResult ? (
-              <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748b' }}>
+              <div style={{ textAlign: 'center', padding: '60px 20px', color: M3.textMuted }}>
                 <span style={{ fontSize: 36 }}>⚡</span>
-                <p style={{ marginTop: 10 }}>Load an Rx and scan a product strip to view safety evaluation.</p>
+                <p style={{ marginTop: 10, fontSize: 14 }}>Load an Rx and scan a product strip to view safety evaluation.</p>
               </div>
             ) : scanResult.result === 'equivalent_candidate' ? (
               // 🟢 EQUIVALENT CANDIDATE
-              <div style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)', border: '1px solid #22c55e', borderRadius: 8, padding: 18 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                  <span style={{ fontSize: 28 }}>🟢</span>
+              <div style={{ backgroundColor: M3.greenSurface, border: `1.5px solid ${M3.greenBorder}`, borderRadius: 8, padding: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                  <span style={{ fontSize: 30 }}>🟢</span>
                   <div>
-                    <h4 style={{ margin: 0, fontSize: 18, color: '#22c55e' }}>EQUIVALENT CANDIDATE</h4>
-                    <p style={{ margin: 0, fontSize: 12, color: '#86efac' }}>Identical active ingredient, strength, and pharmaceutical form.</p>
+                    <h4 style={{ margin: 0, fontSize: 18, color: M3.green, fontWeight: 700 }}>EQUIVALENT CANDIDATE</h4>
+                    <p style={{ margin: '2px 0 0', fontSize: 12.5, color: M3.textSecondary }}>Identical active ingredient, strength, and pharmaceutical form.</p>
                   </div>
                 </div>
 
-                <div style={{ backgroundColor: '#0f172a', padding: 12, borderRadius: 6, margin: '14px 0', fontSize: 13 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <span style={{ color: '#94a3b8' }}>Prescribed:</span>
+                <div style={{ backgroundColor: M3.card, padding: 14, borderRadius: 8, margin: '14px 0', fontSize: 13.5, border: `1px solid ${M3.border}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ color: M3.textMuted }}>Prescribed Item:</span>
                     <strong>Amlong 5 (Amlodipine 5mg Tab)</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#94a3b8' }}>Scanned Substitute:</span>
-                    <strong style={{ color: '#38bdf8' }}>Stamlo 5 (Amlodipine 5mg Tab)</strong>
+                    <span style={{ color: M3.textMuted }}>Scanned Substitute:</span>
+                    <strong style={{ color: M3.teal }}>Stamlo 5 (Amlodipine 5mg Tab)</strong>
                   </div>
                 </div>
 
                 {!attested ? (
                   <div>
-                    <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 12 }}>
-                      As required by safety protocol, confirm pharmacist attestation before dispensing:
+                    <p style={{ fontSize: 12.5, color: M3.textSecondary, marginBottom: 14 }}>
+                      Safety Invariant #1: System does not auto-substitute. Confirm pharmacist attestation to dispense:
                     </p>
                     <button
                       onClick={handleAttest}
-                      style={{ width: '100%', backgroundColor: '#22c55e', color: 'white', border: 'none', padding: '12px 18px', borderRadius: 6, fontWeight: 700, cursor: 'pointer', fontSize: 14 }}
+                      style={{
+                        width: '100%',
+                        backgroundColor: M3.green,
+                        color: 'white',
+                        border: 'none',
+                        padding: '12px 18px',
+                        borderRadius: 8,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        fontSize: 14.5
+                      }}
                     >
                       ✍️ Pharmacist Attest & Complete Dispense
                     </button>
                   </div>
                 ) : (
-                  <div style={{ backgroundColor: '#22c55e', color: 'white', padding: '10px 14px', borderRadius: 6, fontWeight: 700, textAlign: 'center' }}>
-                    ✓ DISPENSED & ATTESTED (Audit Entry Recorded)
+                  <div style={{ backgroundColor: M3.green, color: 'white', padding: '12px 16px', borderRadius: 8, fontWeight: 700, textAlign: 'center', fontSize: 14 }}>
+                    ✓ DISPENSED & ATTESTED (Immutable Audit Entry Recorded)
                   </div>
                 )}
               </div>
             ) : (
               // 🔴 SUBSTITUTION BLOCKED (MISMATCH / DANGEROUS)
-              <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', borderRadius: 8, padding: 18 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                  <span style={{ fontSize: 28 }}>🔴</span>
+              <div style={{ backgroundColor: M3.crimsonSurface, border: `1.5px solid ${M3.crimsonBorder}`, borderRadius: 8, padding: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                  <span style={{ fontSize: 30 }}>🔴</span>
                   <div>
-                    <h4 style={{ margin: 0, fontSize: 18, color: '#ef4444' }}>DISPENSING BLOCKED · MISMATCH</h4>
-                    <p style={{ margin: 0, fontSize: 12, color: '#fca5a5' }}>Silent or unsafe substitution strictly prohibited.</p>
+                    <h4 style={{ margin: 0, fontSize: 18, color: M3.crimson, fontWeight: 700 }}>DISPENSING BLOCKED · MISMATCH</h4>
+                    <p style={{ margin: '2px 0 0', fontSize: 12.5, color: M3.crimson }}>Silent or unapproved substitution strictly prohibited.</p>
                   </div>
                 </div>
 
                 {/* Side by side comparison */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, margin: '14px 0' }}>
-                  <div style={{ backgroundColor: '#0f172a', padding: 10, borderRadius: 6, border: '1px solid #334155' }}>
-                    <div style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase' }}>Prescribed Strip</div>
-                    <strong style={{ fontSize: 14, color: '#f8fafc' }}>Amlong 5</strong>
-                    <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>Amlodipine 5.0mg</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, margin: '14px 0' }}>
+                  <div style={{ backgroundColor: M3.card, padding: 12, borderRadius: 8, border: `1px solid ${M3.border}` }}>
+                    <div style={{ fontSize: 11, color: M3.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>Prescribed Strip</div>
+                    <strong style={{ fontSize: 14.5, color: M3.textPrimary }}>Amlong 5</strong>
+                    <div style={{ fontSize: 12.5, color: M3.textSecondary, marginTop: 4 }}>Amlodipine 5.0mg</div>
                   </div>
-                  <div style={{ backgroundColor: '#0f172a', padding: 10, borderRadius: 6, border: '1px solid #ef4444' }}>
-                    <div style={{ fontSize: 11, color: '#ef4444', textTransform: 'uppercase' }}>Scanned Strip</div>
-                    <strong style={{ fontSize: 14, color: '#f8fafc' }}>{scanResult.matched_brand}</strong>
-                    <div style={{ fontSize: 12, color: '#fca5a5', marginTop: 4 }}>{scanResult.active_ingredients}</div>
+                  <div style={{ backgroundColor: M3.card, padding: 12, borderRadius: 8, border: `1.5px solid ${M3.crimsonBorder}` }}>
+                    <div style={{ fontSize: 11, color: M3.crimson, textTransform: 'uppercase', fontWeight: 700 }}>Scanned Strip</div>
+                    <strong style={{ fontSize: 14.5, color: M3.textPrimary }}>{scanResult.matched_brand}</strong>
+                    <div style={{ fontSize: 12.5, color: M3.crimson, marginTop: 4 }}>{scanResult.active_ingredients}</div>
                   </div>
                 </div>
 
-                {/* Detected Discrepancies */}
-                <div style={{ backgroundColor: '#0f172a', padding: 10, borderRadius: 6, marginBottom: 14 }}>
-                  <div style={{ fontSize: 12, color: '#f87171', fontWeight: 600, marginBottom: 4 }}>Detected Discrepancies:</div>
-                  <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: '#fca5a5' }}>
-                    {scanResult.differences.map((diff, i) => (
-                      <li key={i}>{diff}</li>
+                <div style={{ backgroundColor: M3.card, padding: 12, borderRadius: 8, marginBottom: 16, border: `1px solid ${M3.border}` }}>
+                  <div style={{ fontSize: 12, color: M3.crimson, fontWeight: 700, marginBottom: 4 }}>Detected Differences:</div>
+                  <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: M3.crimson }}>
+                    {scanResult.differences.map((d, i) => (
+                      <li key={i}>{d}</li>
                     ))}
                   </ul>
                 </div>
@@ -414,13 +510,23 @@ export default function App() {
                 {!verificationSent ? (
                   <button
                     onClick={handleSendVerification}
-                    style={{ width: '100%', backgroundColor: '#f97316', color: 'white', border: 'none', padding: '12px 18px', borderRadius: 6, fontWeight: 700, cursor: 'pointer', fontSize: 14 }}
+                    style={{
+                      width: '100%',
+                      backgroundColor: M3.blue,
+                      color: 'white',
+                      border: 'none',
+                      padding: '12px 18px',
+                      borderRadius: 8,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      fontSize: 14
+                    }}
                   >
-                    📩 Send Verification Card to Prescriber
+                    📤 Send Verification Request to Doctor
                   </button>
                 ) : (
-                  <div style={{ backgroundColor: 'rgba(249, 115, 22, 0.2)', border: '1px solid #f97316', color: '#f97316', padding: 10, borderRadius: 6, textAlign: 'center', fontWeight: 600, fontSize: 13 }}>
-                    {isOffline ? '📦 Card Queued in Offline Outbox (Will send on reconnect)' : '✓ Verification Card Delivered to Dr. Meera Iyer'}
+                  <div style={{ backgroundColor: M3.blueSurface, color: M3.blue, border: `1px solid ${M3.border}`, padding: '10px 14px', borderRadius: 8, fontWeight: 700, textAlign: 'center', fontSize: 13 }}>
+                    ✓ Request Queued to Dr. Meera Iyer (Cardiologist)
                   </div>
                 )}
               </div>
@@ -431,26 +537,30 @@ export default function App() {
 
       {/* TAB 2: INVENTORY LEDGER */}
       {activeTab === 'inventory' && (
-        <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: 10, padding: 20 }}>
-          <h3 style={{ fontSize: 18, color: '#38bdf8', margin: '0 0 16px' }}>Stock & Expiry Ledger</h3>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <div style={{ backgroundColor: M3.card, border: `1px solid ${M3.border}`, borderRadius: 12, padding: 22, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+          <h3 style={{ fontSize: 18, color: M3.textPrimary, margin: '0 0 16px', fontWeight: 700 }}>
+            Al-Shifa Pharmacy · Active Drug Inventory Ledger
+          </h3>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid #334155', color: '#94a3b8', textAlign: 'left' }}>
-                <th style={{ padding: 10 }}>Product / SKU Name</th>
-                <th style={{ padding: 10 }}>Batch No</th>
-                <th style={{ padding: 10 }}>Expiry Date</th>
-                <th style={{ padding: 10 }}>Quantity</th>
-                <th style={{ padding: 10 }}>MRP (₹)</th>
+              <tr style={{ borderBottom: `2px solid ${M3.border}`, textAlign: 'left', color: M3.textMuted }}>
+                <th style={{ padding: '10px 12px' }}>SKU Name</th>
+                <th style={{ padding: '10px 12px' }}>Batch Number</th>
+                <th style={{ padding: '10px 12px' }}>Expiry Date</th>
+                <th style={{ padding: '10px 12px' }}>In Stock</th>
+                <th style={{ padding: '10px 12px' }}>MRP (₹)</th>
               </tr>
             </thead>
             <tbody>
               {inventoryList.map((item, idx) => (
-                <tr key={idx} style={{ borderBottom: '1px solid #334155' }}>
-                  <td style={{ padding: 10, fontWeight: 600 }}>{item.sku_name}</td>
-                  <td style={{ padding: 10, color: '#94a3b8' }}><code>{item.batch_no}</code></td>
-                  <td style={{ padding: 10, color: item.expiry_on.startsWith('2027') ? '#38bdf8' : '#22c55e' }}>{item.expiry_on}</td>
-                  <td style={{ padding: 10 }}>{item.qty} units</td>
-                  <td style={{ padding: 10 }}>₹{item.mrp.toFixed(2)}</td>
+                <tr key={idx} style={{ borderBottom: `1px solid ${M3.border}` }}>
+                  <td style={{ padding: '12px', fontWeight: 600, color: M3.textPrimary }}>{item.sku_name}</td>
+                  <td style={{ padding: '12px', color: M3.textSecondary }}><code>{item.batch_no}</code></td>
+                  <td style={{ padding: '12px', color: M3.textSecondary }}>{item.expiry_on}</td>
+                  <td style={{ padding: '12px', fontWeight: 700, color: item.qty < 100 ? M3.amber : M3.green }}>
+                    {item.qty} units
+                  </td>
+                  <td style={{ padding: '12px', color: M3.textPrimary }}>₹{item.mrp.toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
@@ -458,57 +568,55 @@ export default function App() {
         </div>
       )}
 
-      {/* TAB 3: CSV CONNECTOR WIZARD */}
+      {/* TAB 3: CSV CONNECTOR */}
       {activeTab === 'csv' && (
-        <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: 10, padding: 20 }}>
-          <h3 style={{ fontSize: 18, color: '#38bdf8', margin: '0 0 8px' }}>
-            CSV Inventory Connector (ERP Import Wizard)
+        <div style={{ backgroundColor: M3.card, border: `1px solid ${M3.border}`, borderRadius: 12, padding: 22, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+          <h3 style={{ fontSize: 18, color: M3.textPrimary, margin: '0 0 10px', fontWeight: 700 }}>
+            Indian Pharmacy ERP CSV Import Wizard
           </h3>
-          <p style={{ fontSize: 13, color: '#94a3b8', margin: '0 0 16px' }}>
-            Seamlessly import stock reports exported from retail billing ERPs (Marg ERP, RetailGraph, etc.) with automatic column mapping.
+          <p style={{ fontSize: 13, color: M3.textMuted, margin: '0 0 16px' }}>
+            Auto-detects and normalizes inventory files exported from Marg ERP, RetailGraph, and generic CSV formats.
           </p>
 
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontSize: 13, color: '#94a3b8', marginBottom: 6 }}>Paste CSV Data or Sample:</label>
-            <textarea
-              rows={6}
-              value={csvContent}
-              onChange={e => setCsvContent(e.target.value)}
-              placeholder="Paste Marg ERP CSV lines here..."
-              style={{ width: '100%', backgroundColor: '#0f172a', color: 'white', border: '1px solid #475569', padding: 10, borderRadius: 6, fontFamily: 'monospace', fontSize: 12 }}
-            />
-          </div>
+          <textarea
+            rows={6}
+            value={csvContent}
+            onChange={e => setCsvContent(e.target.value)}
+            placeholder="Paste CSV rows here or sample: SKU_NAME,BATCH_NO,EXPIRY_DATE,STOCK_QTY,MRP..."
+            style={{
+              width: '100%',
+              backgroundColor: M3.bg,
+              color: M3.textPrimary,
+              border: `1px solid ${M3.borderStrong}`,
+              padding: '12px',
+              borderRadius: 8,
+              fontSize: 13,
+              fontFamily: 'monospace',
+              marginBottom: 16
+            }}
+          />
 
-          <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-            <button
-              onClick={() => {
-                setCsvContent(`Item_Description,Batch,Expiry_Date,Closing_Stock,MRP\nStamlo 5mg Tab,BTH-ST-882,31-12-2027,140,84.50\nCilacar 10mg Tab,BTH-CL-774,31-08-2027,80,112.00\nLosar 50mg Tab,BTH-LS-552,31-10-2027,65,98.50`);
-              }}
-              style={{ backgroundColor: '#475569', color: 'white', border: 'none', padding: '8px 14px', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}
-            >
-              Load Marg ERP Sample
-            </button>
-            <button
-              onClick={() => {
-                setCsvContent(`Product Name,Lot Number,Exp Date,Quantity,Price\nStamlo 5mg Tab,BTH-ST-882,2027-12-31,140,84.50\nGlycomet 500mg Tab,BTH-GL-401,2028-06-30,220,38.20`);
-              }}
-              style={{ backgroundColor: '#475569', color: 'white', border: 'none', padding: '8px 14px', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}
-            >
-              Load Generic ERP Sample
-            </button>
-            <button
-              onClick={handleImportCsv}
-              style={{ backgroundColor: '#0284c7', color: 'white', border: 'none', padding: '8px 18px', borderRadius: 6, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
-            >
-              📥 Validate & Idempotent Import
-            </button>
-          </div>
+          <button
+            onClick={handleImportCsv}
+            style={{
+              backgroundColor: M3.blue,
+              color: 'white',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: 8,
+              fontWeight: 700,
+              cursor: 'pointer',
+              fontSize: 13.5
+            }}
+          >
+            Import & Verify ERP Stock
+          </button>
 
           {importSummary && (
-            <div style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)', border: '1px solid #22c55e', borderRadius: 8, padding: 14 }}>
-              <h4 style={{ color: '#22c55e', margin: '0 0 6px', fontSize: 14 }}>✓ Import Validation Report</h4>
-              <p style={{ margin: 0, fontSize: 13, color: '#f8fafc' }}>
-                Imported: <strong>{importSummary.new_items} rows</strong> · Updated: <strong>{importSummary.updated} rows</strong> · Rejects: <strong>0</strong> · Processed at: {importSummary.timestamp}
+            <div style={{ marginTop: 20, backgroundColor: M3.greenSurface, border: `1px solid ${M3.greenBorder}`, padding: 16, borderRadius: 8 }}>
+              <strong style={{ color: M3.green, fontSize: 14 }}>✓ Import Successful ({importSummary.timestamp})</strong>
+              <p style={{ margin: '6px 0 0', fontSize: 13, color: M3.textSecondary }}>
+                Processed {importSummary.total} rows. Rejects: 0. Catalog synchronized with zero conflicts.
               </p>
             </div>
           )}
