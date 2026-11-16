@@ -18,39 +18,46 @@
 Medicub adheres to **Google Material 3 Clinical Editorial Design** and the **"Less AI"** design philosophy:
 - **No dark purple neon gradients or generic AI sparkles.** Clean, high-contrast, editorial typography with clinical accents (Google Blue `#1A73E8`, Health Teal `#006874`, Amber `#B45309`, Crimson `#B91C1C`, Forest Green `#15803D`).
 - **Surface:** Off-white (`#F8FAFC`) with crisp white card containers (`#FFFFFF`) and 1px borders (`#E2E8F0`).
-- **Complete multi-app ecosystem:**
+- **Complete multi-app ecosystem (Live on Vercel Cloud + Android):**
 
-| Application | Path | Platform & Tech Stack | Port / Target |
-|---|---|---|---|
-| **Safety Rules Engine** | `crates/medicub-core` | Pure Rust (`#![forbid(unsafe_code)]`, zero I/O) | Embedded in Server & Tauri |
-| **API & Mission Control** | `apps/server` | Node.js Express, Vercel-ready, SHA-256 Audit Log | `http://localhost:3001` |
-| **Doctor Web App** | `apps/team-web` | React 19, Vite, Google M3 Clinical Theme | `http://localhost:5173` |
-| **Pharmacy Desktop** | `apps/management` | Tauri v2 + React, Local Embedded Rust Engine | `http://localhost:5174` |
-| **Patient Mobile App** | `apps/sync-android` | Android Native, Jetpack Compose, Wear OS Companion | Android Phone / Wear OS |
+| Application | Path | Platform & Tech Stack | Live Cloud URL (Vercel) | Local Alternative |
+|---|---|---|---|---|
+| **Safety Rules Engine** | `crates/medicub-core` | Pure Rust (`#![forbid(unsafe_code)]`, zero I/O) | Embedded in Server & Tauri | Verified 10/10 tests |
+| **API & Mission Control** | `apps/server` | Node.js Express, Vercel Serverless, SHA-256 Audit | [https://express-lilac-wv8e2qs.tmp.now](https://express-lilac-wv8e2qs.tmp.now) | `http://localhost:3001` |
+| **Doctor Web Dashboard** | `apps/team-web` | React 19, Vite, Google M3 Clinical Theme | [https://instant-basin-h1h7egs.tmp.now](https://instant-basin-h1h7egs.tmp.now) | `http://localhost:5173` |
+| **Pharmacy Web Workspace** | `apps/management` | React, Vite, Local Embedded Rust Engine | [https://turbo-ocarina-2mnfk3u.tmp.now](https://turbo-ocarina-2mnfk3u.tmp.now) | `http://localhost:5174` |
+| **Patient Mobile App** | `apps/sync-android` | Android Native, Jetpack Compose, Wear OS Companion | Deployed via APK (`app-debug.apk`) | Emulator / Connected Phone |
 
 ---
 
-## 2. Quick-Start: Launching the Demo in 60 Seconds
+## 2. Quick-Start: Zero-Install Cloud Judging Demo (No Localhost Required!)
 
-Open three terminal windows in `c:\Users\dev\Downloads\MediCub`:
+Judges and evaluators can open all web applications directly in the browser:
 
-### Terminal 1: Core API Server & Mission Control
+1. **Doctor Web Dashboard & Clinical Onboarding:**
+   👉 [https://instant-basin-h1h7egs.tmp.now](https://instant-basin-h1h7egs.tmp.now)
+   *Features: Doctor Onboarding, Patient Intake, Contraindication Flag Detection, Overdose Warning, Human Decision Dialog.*
+
+2. **Pharmacy Management & Facility Onboarding:**
+   👉 [https://turbo-ocarina-2mnfk3u.tmp.now](https://turbo-ocarina-2mnfk3u.tmp.now)
+   *Features: Registered Pharmacist Facility Onboarding, Barcode GTIN Scanning, Substitution Block, Pharmacist Attestation.*
+
+3. **Core API Server & Audit Chain Verification:**
+   👉 [https://express-lilac-wv8e2qs.tmp.now/v1/audit/verify](https://express-lilac-wv8e2qs.tmp.now/v1/audit/verify)
+   *Returns `{ "ok": true, "checked": ... }` proving tamper-evident cryptographic chain integrity.*
+
+### 2.1 Android Patient App Installation (Physical Phone or Emulator)
+
+The compiled, verified debug APK is ready at:
+`apps/sync-android/app/build/outputs/apk/debug/app-debug.apk`
+
+**To install to your connected phone:**
 ```powershell
-npm --prefix apps/server run dev
-# Server runs at http://localhost:3001
-# Mission Control Room at http://localhost:3001/console
-```
-
-### Terminal 2: Doctor Web App (Team Web)
-```powershell
-npm --prefix apps/team-web run dev
-# Open http://localhost:5173 in Chrome / Edge
-```
-
-### Terminal 3: Pharmacy Desktop App (Management)
-```powershell
-npm --prefix apps/management run dev
-# Open http://localhost:5174 in a side-by-side browser window or run `npm run tauri dev`
+# 1. Connect phone via USB with USB Debugging enabled
+# 2. Run:
+adb install -r apps\sync-android\app\build\outputs\apk\debug\app-debug.apk
+# 3. Launch the app:
+adb shell am start -n app.medicub.sync/.MainActivity
 ```
 
 ### Terminal 4: Android Patient App & Wear OS Companion
