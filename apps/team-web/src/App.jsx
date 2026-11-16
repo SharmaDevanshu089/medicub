@@ -270,9 +270,13 @@ export default function App() {
         body: JSON.stringify({ code: consentCode.trim() })
       });
       if (res.ok) {
+        const data = await res.json();
         setConsentActive(true);
-        alert('Patient consent verified & redeemed successfully! Access granted for 2 hours.');
-        fetchPatientData(selectedPatientId);
+        alert('✓ Patient consent verified & redeemed successfully! Access granted for 2 hours.');
+        if (data.patient_id) {
+          setSelectedPatientId(data.patient_id);
+          fetchPatientData(data.patient_id);
+        }
       } else {
         alert('Invalid or expired consent code.');
       }
@@ -572,7 +576,7 @@ export default function App() {
                 </button>
                 <input
                   type="text"
-                  placeholder="Enter Consent QR (e.g. 7K2M9Q)"
+                  placeholder="Enter 6-Digit Consent Code (e.g. 847291)"
                   value={consentCode}
                   onChange={e => setConsentCode(e.target.value)}
                   style={{
