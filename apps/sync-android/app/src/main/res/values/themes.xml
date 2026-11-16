@@ -1,5 +1,5 @@
 <resources>
-    <style name="Theme.MedicubSync" parent="android:Theme.Material.Light.NoActionBar">
+    <style name="Theme.MedicubSync" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:statusBarColor">#0F172A</item>
         <item name="android:navigationBarColor">#0F172A</item>
     </style>
