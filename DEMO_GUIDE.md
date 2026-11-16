@@ -55,8 +55,14 @@ npm --prefix apps/management run dev
 
 ### Terminal 4: Android Patient App & Wear OS Companion
 ```powershell
-# Open apps/sync-android in Android Studio and run on emulator or physical phone
-# Or inspect the compiled screens in MainActivity.kt and TodayScreen.kt
+# Option A: Run via Android CLI on emulator
+android emulator start Medium_Phone_API_37.0
+cd apps/sync-android; android run :app
+
+# Option B: Run via Gradle Wrapper
+cd apps/sync-android; .\gradlew.bat installDebug
+
+# Option C: Open apps/sync-android in Android Studio and click Run 'app' (Shift+F10)
 ```
 
 ---
