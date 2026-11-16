@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">Medicub Sync</string>
+    <string name="tab_today">Today</string>
+    <string name="tab_medicines">Medicines</string>
+    <string name="tab_share">Share</string>
+    <string name="tab_bp_check">BP Check</string>
+
+    <string name="morning_doses">Morning Doses</string>
+    <string name="noon_doses">Noon Doses</string>
+    <string name="night_doses">Night Doses</string>
+
+    <string name="action_taken">Taken</string>
+    <string name="action_skip">Skip</string>
+    <string name="action_snooze">Snooze (10m)</string>
+    <string name="action_read_aloud">🔊 Read Aloud</string>
+
+    <string name="alert_card_title">Safety Review in Progress</string>
+    <string name="alert_card_body">Your doctor is reviewing two medicines that contain the same ingredient. Please ask your doctor or pharmacist before your next dose. Do not stop taking any medicine on your own.</string>
+    <string name="alert_card_status">Doctor is reviewing</string>
+
+    <string name="share_title">Share with Doctor or Chemist</string>
+    <string name="share_instruction">Show this QR code to Dr. Rao or your chemist to grant temporary 5-minute access to your medication schedule.</string>
+    <string name="revoke_access">Revoke Access</string>
+    <string name="active_consents">Active Grants</string>
+</resources>

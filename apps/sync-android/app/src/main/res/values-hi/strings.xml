@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">मेडीकब सिंक</string>
+    <string name="tab_today">आज की खुराक</string>
+    <string name="tab_medicines">मेरी दवाइयां</string>
+    <string name="tab_share">साझा करें</string>
+    <string name="tab_bp_check">बीपी जांच</string>
+
+    <string name="morning_doses">सुबह की खुराक</string>
+    <string name="noon_doses">दोपहर की खुराक</string>
+    <string name="night_doses">रात की खुराक</string>
+
+    <string name="action_taken">ले ली</string>
+    <string name="action_skip">छोड़ दी</string>
+    <string name="action_snooze">10 मिनट बाद याद दिलाएं</string>
+    <string name="action_read_aloud">🔊 बोलकर सुनाएं</string>
+
+    <string name="alert_card_title">सुरक्षा समीक्षा प्रगति पर है</string>
+    <string name="alert_card_body">आपकी दो दवाइयों में एक ही तत्व है। अगली खुराक से पहले अपने डॉक्टर या फार्मासिस्ट से पूछें। अपने आप कोई दवा बंद न करें।</string>
+    <string name="alert_card_status">डॉक्टर समीक्षा कर रहे हैं</string>
+
+    <string name="share_title">डॉक्टर या फार्मासिस्ट से साझा करें</string>
+    <string name="share_instruction">डॉक्टर राव या केमिस्ट को अपनी दवा सूची देखने की 5 मिनट की अस्थायी अनुमति देने के लिए यह क्यूआर कोड दिखाएं।</string>
+    <string name="revoke_access">अनुमति वापस लें</string>
+    <string name="active_consents">सक्रिय अनुमतियां</string>
+</resources>
