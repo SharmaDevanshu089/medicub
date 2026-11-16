@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
-const API_BASE = '/v1';
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:3001/v1'
+  : 'https://express-lilac-wv8e2qs.tmp.now/v1';
 
 // Google Material 3 Clinical Design Tokens
 const M3 = {
@@ -29,6 +31,19 @@ const M3 = {
 export default function App() {
   const [activeTab, setActiveTab] = useState('dispense');
   const [isOffline, setIsOffline] = useState(false);
+
+  // Pharmacy Profile State
+  const [pharmacyProfile, setPharmacyProfile] = useState({
+    pharmacy_name: 'Al-Shifa Chemist & Pharmacy',
+    pharmacist_name: 'Imran Sheikh',
+    license_no: 'DL-PH-88412',
+    terminal: '01'
+  });
+  const [showOnboardModal, setShowOnboardModal] = useState(false);
+  const [onboardPharmacyName, setOnboardPharmacyName] = useState('');
+  const [onboardPharmacistName, setOnboardPharmacistName] = useState('');
+  const [onboardLicenseNo, setOnboardLicenseNo] = useState('');
+  const [onboardLocation, setOnboardLocation] = useState('');
 
   // Dispense flow
   const [rxCodeInput, setRxCodeInput] = useState('RX-IYER-7K2M');
@@ -64,6 +79,34 @@ export default function App() {
     }
   };
 
+  const handleOnboardPharmacy = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`${API_BASE}/onboarding/pharmacy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pharmacy_name: onboardPharmacyName,
+          pharmacist_name: onboardPharmacistName,
+          license_no: onboardLicenseNo,
+          location: onboardLocation
+        })
+      });
+      if (res.ok) {
+        setPharmacyProfile({
+          pharmacy_name: onboardPharmacyName,
+          pharmacist_name: onboardPharmacistName,
+          license_no: onboardLicenseNo,
+          terminal: '01'
+        });
+        setShowOnboardModal(false);
+        alert(`Pharmacy '${onboardPharmacyName}' onboarded successfully!`);
+      }
+    } catch (err) {
+      alert('Error onboarding pharmacy.');
+    }
+  };
+
   const handleLookupRx = async () => {
     if (!rxCodeInput.trim()) return;
     try {
@@ -78,7 +121,7 @@ export default function App() {
         alert('Prescription not found with that code.');
       }
     } catch (e) {
-      // Offline fallback: Use simulated cached Rx
+      // Offline fallback: Use cached prescription
       setLoadedPrescription({
         id: 'rx-cached-01',
         rx_code: rxCodeInput.trim(),
@@ -107,7 +150,7 @@ export default function App() {
     if (!loadedPrescription || loadedPrescription.items.length === 0) return;
 
     if (scannedProduct === 'DRUG003') {
-      // Stamlo 5 (same active ingredient: Amlodipine 5mg) -> Equivalent candidate!
+      // Stamlo 5 -> Equivalent Candidate
       setScanResult({
         result: 'equivalent_candidate',
         matched_brand: 'Stamlo 5',
@@ -117,7 +160,7 @@ export default function App() {
         differences: []
       });
     } else if (scannedProduct === 'DRUG002') {
-      // Telma-AM 40/5 (Telmisartan 40mg + Amlodipine 5mg) -> Mismatch / Duplicate!
+      // Telma-AM 40/5 -> Dangerous Extra Ingredient
       setScanResult({
         result: 'mismatch',
         matched_brand: 'Telma-AM 40/5',
@@ -130,7 +173,7 @@ export default function App() {
         ]
       });
     } else if (scannedProduct === 'DRUG008') {
-      // Amlong 10 (10mg instead of 5mg) -> Strength mismatch!
+      // Amlong 10 -> Strength mismatch
       setScanResult({
         result: 'mismatch',
         matched_brand: 'Amlong 10',
@@ -194,18 +237,34 @@ export default function App() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0, color: M3.textPrimary }}>
-              Medicub Management · Al-Shifa Chemist & Pharmacy
+              Medicub Management · {pharmacyProfile.pharmacy_name}
             </h1>
             <span style={{ fontSize: 11, fontWeight: 700, backgroundColor: M3.tealSurface, color: M3.teal, padding: '2px 8px', borderRadius: 9999, border: `1px solid ${M3.border}` }}>
-              DESKTOP APP
+              PHARMACY WORKSPACE
             </span>
+            <span style={{ fontSize: 11, color: M3.textMuted }}>API: {API_BASE}</span>
           </div>
           <p style={{ margin: '3px 0 0', fontSize: 13, color: M3.textMuted }}>
-            Pharmacist: <strong>Imran Sheikh</strong> · Reg No: <code>DL-PH-88412</code> · Terminal #01
+            Pharmacist: <strong>{pharmacyProfile.pharmacist_name}</strong> · Lic No: <code>{pharmacyProfile.license_no}</code> · Terminal #{pharmacyProfile.terminal}
           </p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            onClick={() => setShowOnboardModal(true)}
+            style={{
+              backgroundColor: M3.blueSurface,
+              color: M3.blue,
+              border: `1px solid ${M3.border}`,
+              padding: '7px 14px',
+              borderRadius: 8,
+              cursor: 'pointer',
+              fontWeight: 700,
+              fontSize: 12.5
+            }}
+          >
+            + Onboard Pharmacy
+          </button>
           <button
             onClick={() => setIsOffline(!isOffline)}
             style={{
@@ -295,7 +354,7 @@ export default function App() {
         </button>
       </div>
 
-      {/* TAB 1: DISPENSE FLOW (DEMO SCENARIO STEP 4) */}
+      {/* TAB 1: DISPENSE FLOW */}
       {activeTab === 'dispense' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: 24 }}>
           {/* Rx Lookup Panel */}
@@ -424,7 +483,7 @@ export default function App() {
                 <p style={{ marginTop: 10, fontSize: 14 }}>Load an Rx and scan a product strip to view safety evaluation.</p>
               </div>
             ) : scanResult.result === 'equivalent_candidate' ? (
-              // 🟢 EQUIVALENT CANDIDATE
+              // EQUIVALENT CANDIDATE
               <div style={{ backgroundColor: M3.greenSurface, border: `1.5px solid ${M3.greenBorder}`, borderRadius: 8, padding: 20 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
                   <span style={{ fontSize: 30 }}>🟢</span>
@@ -474,7 +533,7 @@ export default function App() {
                 )}
               </div>
             ) : (
-              // 🔴 SUBSTITUTION BLOCKED (MISMATCH / DANGEROUS)
+              // SUBSTITUTION BLOCKED
               <div style={{ backgroundColor: M3.crimsonSurface, border: `1.5px solid ${M3.crimsonBorder}`, borderRadius: 8, padding: 20 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
                   <span style={{ fontSize: 30 }}>🔴</span>
@@ -526,7 +585,7 @@ export default function App() {
                   </button>
                 ) : (
                   <div style={{ backgroundColor: M3.blueSurface, color: M3.blue, border: `1px solid ${M3.border}`, padding: '10px 14px', borderRadius: 8, fontWeight: 700, textAlign: 'center', fontSize: 13 }}>
-                    ✓ Request Queued to Dr. Meera Iyer (Cardiologist)
+                    ✓ Request Queued to Prescriber
                   </div>
                 )}
               </div>
@@ -539,7 +598,7 @@ export default function App() {
       {activeTab === 'inventory' && (
         <div style={{ backgroundColor: M3.card, border: `1px solid ${M3.border}`, borderRadius: 12, padding: 22, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
           <h3 style={{ fontSize: 18, color: M3.textPrimary, margin: '0 0 16px', fontWeight: 700 }}>
-            Al-Shifa Pharmacy · Active Drug Inventory Ledger
+            {pharmacyProfile.pharmacy_name} · Active Drug Inventory Ledger
           </h3>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
             <thead>
@@ -620,6 +679,38 @@ export default function App() {
               </p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* MODAL: Onboard Pharmacy */}
+      {showOnboardModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div style={{ backgroundColor: M3.card, border: `1px solid ${M3.borderStrong}`, borderRadius: 12, padding: 26, width: 480, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+            <h3 style={{ margin: '0 0 6px', color: M3.textPrimary, fontSize: 18, fontWeight: 700 }}>Pharmacy Facility Onboarding</h3>
+            <p style={{ fontSize: 13, color: M3.textMuted, margin: '0 0 16px' }}>Register a retail pharmacy dispensary and licensed dispensing chemist.</p>
+            <form onSubmit={handleOnboardPharmacy}>
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, color: M3.textSecondary, marginBottom: 4 }}>Pharmacy Store Name</label>
+                <input required type="text" placeholder="e.g. Al-Shifa Chemist & Druggist" value={onboardPharmacyName} onChange={e => setOnboardPharmacyName(e.target.value)} style={{ width: '100%', backgroundColor: M3.bg, border: `1px solid ${M3.borderStrong}`, padding: '8px 12px', borderRadius: 8, fontSize: 13 }} />
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, color: M3.textSecondary, marginBottom: 4 }}>Registered Pharmacist Name</label>
+                <input required type="text" placeholder="e.g. Imran Sheikh" value={onboardPharmacistName} onChange={e => setOnboardPharmacistName(e.target.value)} style={{ width: '100%', backgroundColor: M3.bg, border: `1px solid ${M3.borderStrong}`, padding: '8px 12px', borderRadius: 8, fontSize: 13 }} />
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, color: M3.textSecondary, marginBottom: 4 }}>State Drug License No.</label>
+                <input required type="text" placeholder="e.g. DL-20B-99120" value={onboardLicenseNo} onChange={e => setOnboardLicenseNo(e.target.value)} style={{ width: '100%', backgroundColor: M3.bg, border: `1px solid ${M3.borderStrong}`, padding: '8px 12px', borderRadius: 8, fontSize: 13 }} />
+              </div>
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, color: M3.textSecondary, marginBottom: 4 }}>Retail Location</label>
+                <input required type="text" placeholder="e.g. Lajpat Nagar, New Delhi" value={onboardLocation} onChange={e => setOnboardLocation(e.target.value)} style={{ width: '100%', backgroundColor: M3.bg, border: `1px solid ${M3.borderStrong}`, padding: '8px 12px', borderRadius: 8, fontSize: 13 }} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                <button type="button" onClick={() => setShowOnboardModal(false)} style={{ background: M3.bg, color: M3.textSecondary, border: `1px solid ${M3.borderStrong}`, padding: '8px 16px', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
+                <button type="submit" style={{ background: M3.blue, color: 'white', border: 'none', padding: '8px 18px', borderRadius: 8, cursor: 'pointer', fontWeight: 700 }}>Register Pharmacy</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
