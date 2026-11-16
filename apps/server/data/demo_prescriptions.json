@@ -1,0 +1,52 @@
+[
+  {
+    "id": "rx-dr-iyer-cardio-001",
+    "rx_code": "RX-IYER-7K2M",
+    "patient_id": "usr-ramesh-kumar-001",
+    "prescriber_id": "usr-meera-iyer-003",
+    "prescriber_name": "Dr. Meera Iyer",
+    "facility_id": "fac-delhi-heart-clinic",
+    "status": "signed",
+    "notes": "Essential hypertension management. Continue morning walk and salt restriction.",
+    "signed_at": "2026-11-02T10:30:00Z",
+    "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "items": [
+      {
+        "id": "item-iyer-001",
+        "drug_id": "DRUG001",
+        "brand": "Amlong 5",
+        "dose_value": 5.0,
+        "dose_unit": "mg",
+        "frequency_code": "OD",
+        "timing": ["morning"],
+        "duration_days": 30,
+        "instructions": "Take once daily in the morning with water"
+      }
+    ]
+  },
+  {
+    "id": "rx-dr-rao-diab-001",
+    "rx_code": "RX-RAO-9Q1P",
+    "patient_id": "usr-ramesh-kumar-001",
+    "prescriber_id": "usr-arjun-rao-004",
+    "prescriber_name": "Dr. Arjun Rao",
+    "facility_id": "fac-metro-diabetes-care",
+    "status": "signed",
+    "notes": "Type 2 diabetes glycemic control. Review fasting blood glucose monthly.",
+    "signed_at": "2026-10-25T14:15:00Z",
+    "content_hash": "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e",
+    "items": [
+      {
+        "id": "item-rao-001",
+        "drug_id": "DRUG004",
+        "brand": "Glycomet 500",
+        "dose_value": 500.0,
+        "dose_unit": "mg",
+        "frequency_code": "BD",
+        "timing": ["morning", "night"],
+        "duration_days": 60,
+        "instructions": "Take twice daily with meals"
+      }
+    ]
+  }
+]

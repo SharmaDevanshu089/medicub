@@ -1,0 +1,257 @@
+[
+  {
+    "id": "CASE-DUP-COMBO-01",
+    "name": "Hidden duplicate in combination pill (Defining Demo Scenario)",
+    "description": "Patient is taking Amlong 5 (Amlodipine 5mg). Prescriber drafts Telma-AM 40/5 (Telmisartan 40mg + Amlodipine 5mg).",
+    "regimen": [
+      {
+        "id": "reg-01",
+        "patient_id": "usr-ramesh-kumar-001",
+        "drug_id": "DRUG001",
+        "brand": "Amlong 5",
+        "dose": "5mg",
+        "frequency": "OD",
+        "timing": ["morning"],
+        "prescriber_name": "Dr. Meera Iyer",
+        "status": "active",
+        "started_on": "2026-11-02T10:30:00Z"
+      }
+    ],
+    "new_items": [
+      {
+        "drug_id": "DRUG002",
+        "brand": "Telma-AM 40/5",
+        "dose_value": 1.0,
+        "dose_unit": "tablet",
+        "frequency_code": "OD",
+        "timing": ["morning"],
+        "duration_days": 30
+      }
+    ],
+    "expected_rules": ["R-DUP-001"],
+    "expected_min_severity": "high"
+  },
+  {
+    "id": "CASE-DUP-CROSS-BRAND-02",
+    "name": "Direct cross-brand duplicate ingredient",
+    "description": "Patient takes Amlong 5. Second doctor prescribes Stamlo 5 (also Amlodipine 5mg).",
+    "regimen": [
+      {
+        "id": "reg-02",
+        "patient_id": "usr-ramesh-kumar-001",
+        "drug_id": "DRUG001",
+        "brand": "Amlong 5",
+        "dose": "5mg",
+        "frequency": "OD",
+        "timing": ["morning"],
+        "prescriber_name": "Dr. Meera Iyer",
+        "status": "active",
+        "started_on": "2026-11-02T10:30:00Z"
+      }
+    ],
+    "new_items": [
+      {
+        "drug_id": "DRUG003",
+        "brand": "Stamlo 5",
+        "dose_value": 5.0,
+        "dose_unit": "mg",
+        "frequency_code": "OD",
+        "timing": ["morning"],
+        "duration_days": 30
+      }
+    ],
+    "expected_rules": ["R-DUP-001"],
+    "expected_min_severity": "high"
+  },
+  {
+    "id": "CASE-DUP-WITHIN-RX-03",
+    "name": "Duplicate ingredient within single prescription",
+    "description": "Prescription accidentally contains both Amlong 5 and Stamlo 5.",
+    "regimen": [],
+    "new_items": [
+      {
+        "drug_id": "DRUG001",
+        "brand": "Amlong 5",
+        "dose_value": 5.0,
+        "dose_unit": "mg",
+        "frequency_code": "OD",
+        "timing": ["morning"],
+        "duration_days": 30
+      },
+      {
+        "drug_id": "DRUG003",
+        "brand": "Stamlo 5",
+        "dose_value": 5.0,
+        "dose_unit": "mg",
+        "frequency_code": "OD",
+        "timing": ["morning"],
+        "duration_days": 30
+      }
+    ],
+    "expected_rules": ["R-DUP-002"],
+    "expected_min_severity": "high"
+  },
+  {
+    "id": "CASE-BENIGN-LOOKALIKE-04",
+    "name": "Benign combination with distinct ingredients",
+    "description": "Patient takes Amlong 5 (Amlodipine). Prescriber adds Glycomet 500 (Metformin).",
+    "regimen": [
+      {
+        "id": "reg-04",
+        "patient_id": "usr-ramesh-kumar-001",
+        "drug_id": "DRUG001",
+        "brand": "Amlong 5",
+        "dose": "5mg",
+        "frequency": "OD",
+        "timing": ["morning"],
+        "prescriber_name": "Dr. Meera Iyer",
+        "status": "active",
+        "started_on": "2026-11-02T10:30:00Z"
+      }
+    ],
+    "new_items": [
+      {
+        "drug_id": "DRUG004",
+        "brand": "Glycomet 500",
+        "dose_value": 500.0,
+        "dose_unit": "mg",
+        "frequency_code": "BD",
+        "timing": ["morning", "night"],
+        "duration_days": 30
+      }
+    ],
+    "expected_rules": [],
+    "expected_min_severity": null
+  },
+  {
+    "id": "CASE-THER-CLASS-DUP-05",
+    "name": "Therapeutic class duplication (Dual Dihydropyridine CCB)",
+    "description": "Patient takes Amlong 5 (CCB). Doctor prescribes Cilacar 10 (Cilnidipine, also CCB).",
+    "regimen": [
+      {
+        "id": "reg-05",
+        "patient_id": "usr-ramesh-kumar-001",
+        "drug_id": "DRUG001",
+        "brand": "Amlong 5",
+        "dose": "5mg",
+        "frequency": "OD",
+        "timing": ["morning"],
+        "prescriber_name": "Dr. Meera Iyer",
+        "status": "active",
+        "started_on": "2026-11-02T10:30:00Z"
+      }
+    ],
+    "new_items": [
+      {
+        "drug_id": "DRUG009",
+        "brand": "Cilacar 10",
+        "dose_value": 10.0,
+        "dose_unit": "mg",
+        "frequency_code": "OD",
+        "timing": ["morning"],
+        "duration_days": 30
+      }
+    ],
+    "expected_rules": ["R-THER-001", "R-INT-003"],
+    "expected_min_severity": "high"
+  },
+  {
+    "id": "CASE-INT-ACEI-ARB-06",
+    "name": "Critical Drug Interaction (Ramipril + Telmisartan dual RAS blockade)",
+    "description": "Patient takes Cardace 5 (Ramipril, ACEI). Doctor prescribes Telma 40 (Telmisartan, ARB).",
+    "regimen": [
+      {
+        "id": "reg-06",
+        "patient_id": "usr-ramesh-kumar-001",
+        "drug_id": "DRUG005",
+        "brand": "Cardace 5",
+        "dose": "5mg",
+        "frequency": "OD",
+        "timing": ["morning"],
+        "prescriber_name": "Dr. Meera Iyer",
+        "status": "active",
+        "started_on": "2026-11-02T10:30:00Z"
+      }
+    ],
+    "new_items": [
+      {
+        "drug_id": "DRUG006",
+        "brand": "Telma 40",
+        "dose_value": 40.0,
+        "dose_unit": "mg",
+        "frequency_code": "OD",
+        "timing": ["morning"],
+        "duration_days": 30
+      }
+    ],
+    "expected_rules": ["R-INT-001"],
+    "expected_min_severity": "critical"
+  },
+  {
+    "id": "CASE-DOSE-MAX-EXCEEDED-07",
+    "name": "Daily dose exceeds reference maximum",
+    "description": "Patient takes Amlong 10 (10mg). Doctor adds Amlong 5 (5mg), total 15mg > 10mg max daily dose.",
+    "regimen": [
+      {
+        "id": "reg-07",
+        "patient_id": "usr-ramesh-kumar-001",
+        "drug_id": "DRUG008",
+        "brand": "Amlong 10",
+        "dose": "10mg",
+        "frequency": "OD",
+        "timing": ["morning"],
+        "prescriber_name": "Dr. Meera Iyer",
+        "status": "active",
+        "started_on": "2026-11-02T10:30:00Z"
+      }
+    ],
+    "new_items": [
+      {
+        "drug_id": "DRUG001",
+        "brand": "Amlong 5",
+        "dose_value": 5.0,
+        "dose_unit": "mg",
+        "frequency_code": "OD",
+        "timing": ["morning"],
+        "duration_days": 30
+      }
+    ],
+    "expected_rules": ["R-DUP-001", "R-DOSE-001"],
+    "expected_min_severity": "critical"
+  },
+  {
+    "id": "CASE-SUB-EQUIV-08",
+    "name": "Substitution equivalent candidate at chemist",
+    "description": "Prescription has Amlong 5. Pharmacist scans Stamlo 5 (same active ingredient, strength, form).",
+    "scan_test": {
+      "prescribed_drug_id": "DRUG001",
+      "scanned_code": "8901082000035",
+      "scanned_drug_id": "DRUG003",
+      "expected_result": "equivalent_candidate"
+    }
+  },
+  {
+    "id": "CASE-SUB-MISMATCH-STRENGTH-09",
+    "name": "Substitution strength mismatch at chemist",
+    "description": "Prescription has Amlong 5. Pharmacist scans Amlong 10 (10mg instead of 5mg).",
+    "scan_test": {
+      "prescribed_drug_id": "DRUG001",
+      "scanned_code": "8901082000080",
+      "scanned_drug_id": "DRUG008",
+      "expected_result": "mismatch",
+      "expected_rule": "R-SUB-001"
+    }
+  },
+  {
+    "id": "CASE-SUB-UNKNOWN-10",
+    "name": "Substitution unknown barcode at chemist",
+    "description": "Prescription has Amlong 5. Pharmacist scans an unrecognized barcode.",
+    "scan_test": {
+      "prescribed_drug_id": "DRUG001",
+      "scanned_code": "9999999999999",
+      "scanned_drug_id": null,
+      "expected_result": "unknown",
+      "expected_rule": "R-SUB-002"
+    }
+  }
+]

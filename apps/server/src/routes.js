@@ -1157,4 +1157,213 @@ router.post('/admin/seed/reset', (req, res) => {
   res.json({ success: true, message: 'Database reset to demo seed state' });
 });
 
+// ==========================================
+// 15. ONBOARDING SUITE (Patient, Doctor, Chemist)
+// ==========================================
+
+router.get('/onboarding/status', (req, res) => {
+  res.json({
+    patients_count: store.patients.size,
+    doctors_count: Array.from(store.users.values()).filter(u => u.role === 'doctor').length,
+    pharmacists_count: Array.from(store.users.values()).filter(u => u.role === 'pharmacist').length,
+    active_regimens_count: store.regimenItems.size,
+    recent_patients: Array.from(store.patients.values()).slice(-5),
+    recent_doctors: Array.from(store.users.values()).filter(u => u.role === 'doctor').slice(-5),
+    recent_pharmacies: Array.from(store.users.values()).filter(u => u.role === 'pharmacist').slice(-5)
+  });
+});
+
+router.post('/onboarding/patient', (req, res) => {
+  const { name, age, gender, abha_id, phone, conditions, emergency_contact, locale } = req.body;
+  if (!name) {
+    return res.status(400).json({ error: 'Patient full name is required' });
+  }
+
+  const id = `usr-patient-${Date.now()}`;
+  const patientUser = {
+    id,
+    name,
+    phone: phone || '+919876543210',
+    email: `${name.toLowerCase().replace(/\s+/g, '.')}.${Date.now().toString().slice(-4)}@example.in`,
+    role: 'patient',
+    locale: locale || 'en',
+    patient_profile: {
+      dob: `${new Date().getFullYear() - (parseInt(age, 10) || 45)}-01-01`,
+      gender: gender || 'male',
+      abha_id: abha_id || `91-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
+      allergies: [],
+      chronic_conditions: Array.isArray(conditions) ? conditions : (conditions ? [conditions] : []),
+      primary_prescriber_id: 'usr-arjun-rao-004',
+      emergency_contact: emergency_contact || { name: 'Family Contact', phone: '+919999988888', relation: 'Kin' }
+    }
+  };
+
+  store.users.set(id, patientUser);
+  store.patients.set(id, {
+    user_id: id,
+    name,
+    phone: patientUser.phone,
+    ...patientUser.patient_profile
+  });
+
+  store.audit({
+    actor_id: id,
+    actor_name: name,
+    actor_role: 'patient',
+    action: 'PATIENT_ONBOARDED',
+    entity_type: 'patient',
+    entity_id: id,
+    sentence: `Patient ${name} (ABHA: ${patientUser.patient_profile.abha_id}) completed digital onboarding`
+  });
+
+  res.status(201).json({
+    success: true,
+    patient_id: id,
+    user: patientUser
+  });
+});
+
+router.post('/onboarding/doctor', (req, res) => {
+  const { name, specialty, reg_no, clinic_name, phone, email } = req.body;
+  if (!name || !specialty) {
+    return res.status(400).json({ error: 'Doctor name and specialty are required' });
+  }
+
+  const id = `usr-doc-${Date.now()}`;
+  const docUser = {
+    id,
+    name: name.startsWith('Dr.') ? name : `Dr. ${name}`,
+    phone: phone || '+919811223344',
+    email: email || `${name.toLowerCase().replace(/[^a-z]/g, '')}@clinic.in`,
+    role: 'doctor',
+    specialty,
+    reg_no: reg_no || `MCI-${Math.floor(10000 + Math.random() * 90000)}`,
+    clinic_name: clinic_name || 'City Specialty Clinic',
+    locale: 'en'
+  };
+
+  store.users.set(id, docUser);
+
+  store.audit({
+    actor_id: id,
+    actor_name: docUser.name,
+    actor_role: 'doctor',
+    action: 'DOCTOR_ONBOARDED',
+    entity_type: 'practitioner',
+    entity_id: id,
+    sentence: `${docUser.name} (${docUser.specialty}, Reg: ${docUser.reg_no}) onboarded at ${docUser.clinic_name}`
+  });
+
+  res.status(201).json({
+    success: true,
+    doctor_id: id,
+    user: docUser
+  });
+});
+
+router.post('/onboarding/pharmacy', (req, res) => {
+  const { pharmacy_name, pharmacist_name, license_no, location, phone } = req.body;
+  if (!pharmacy_name || !pharmacist_name) {
+    return res.status(400).json({ error: 'Pharmacy name and pharmacist name are required' });
+  }
+
+  const id = `usr-pharm-${Date.now()}`;
+  const pharmUser = {
+    id,
+    name: pharmacist_name,
+    phone: phone || '+919822334455',
+    email: `${pharmacist_name.toLowerCase().replace(/[^a-z]/g, '')}@pharmacy.in`,
+    role: 'pharmacist',
+    pharmacy_name,
+    license_no: license_no || `DL-${Math.floor(10000 + Math.random() * 90000)}`,
+    location: location || 'Central Market',
+    locale: 'en'
+  };
+
+  store.users.set(id, pharmUser);
+
+  store.audit({
+    actor_id: id,
+    actor_name: pharmacist_name,
+    actor_role: 'pharmacist',
+    action: 'PHARMACY_ONBOARDED',
+    entity_type: 'dispensary',
+    entity_id: id,
+    sentence: `Pharmacist ${pharmacist_name} registered ${pharmacy_name} (Lic: ${pharmUser.license_no})`
+  });
+
+  res.status(201).json({
+    success: true,
+    pharmacy_id: id,
+    user: pharmUser
+  });
+});
+
+router.post('/regimens/intake', (req, res) => {
+  const { patient_id, drug_id, brand, dose_value, dose_unit, frequency_code, timing, prescriber_name, instructions } = req.body;
+  if (!patient_id || !brand) {
+    return res.status(400).json({ error: 'patient_id and brand are required' });
+  }
+
+  const regId = `reg-${Date.now()}`;
+  const item = {
+    id: regId,
+    patient_id,
+    drug_id: drug_id || 'DRUG_CUSTOM',
+    brand,
+    dose: `${dose_value || 1}${dose_unit || 'tab'}`,
+    frequency: frequency_code || 'OD',
+    timing: timing || ['morning'],
+    prescriber_name: prescriber_name || 'Self-Reported / Previous Doctor',
+    prescriber_id: 'usr-intake-001',
+    instructions: instructions || 'Take with water after food',
+    status: 'active',
+    started_on: new Date().toISOString(),
+    ended_on: null
+  };
+
+  store.regimenItems.set(regId, item);
+
+  store.audit({
+    actor_id: patient_id,
+    actor_name: store.patients.get(patient_id)?.name || 'Patient',
+    actor_role: 'patient',
+    action: 'REGIMEN_MEDICATION_ADDED',
+    entity_type: 'regimen_item',
+    entity_id: regId,
+    sentence: `Active medication '${brand}' (${item.dose}, ${item.frequency}) added to regimen for patient ${patient_id}`
+  });
+
+  res.status(201).json({
+    success: true,
+    regimen_item: item
+  });
+});
+
+router.get('/patients', (req, res) => {
+  const list = Array.from(store.patients.values()).map(p => ({
+    id: p.user_id,
+    name: p.name,
+    phone: p.phone,
+    gender: p.gender,
+    dob: p.dob,
+    abha_id: p.abha_id,
+    conditions: p.chronic_conditions || []
+  }));
+  res.json(list);
+});
+
+router.get('/doctors', (req, res) => {
+  const list = Array.from(store.users.values())
+    .filter(u => u.role === 'doctor')
+    .map(u => ({
+      id: u.id,
+      name: u.name,
+      specialty: u.specialty,
+      reg_no: u.reg_no,
+      clinic_name: u.clinic_name
+    }));
+  res.json(list);
+});
+
 module.exports = router;

@@ -87,7 +87,10 @@ class Store {
   }
 
   loadSeed() {
-    const seedDir = path.resolve(__dirname, '../../../data/seed');
+    let seedDir = path.resolve(__dirname, '../data/seed');
+    if (!fs.existsSync(seedDir)) {
+      seedDir = path.resolve(__dirname, '../../../data/seed');
+    }
     if (!fs.existsSync(seedDir)) return;
 
     // 1. Classes

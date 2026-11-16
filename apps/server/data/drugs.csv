@@ -1,0 +1,13 @@
+id,brand,manufacturer,form,route,gtin,image_url
+DRUG001,Amlong 5,Micro Labs Ltd,tablet,oral,8901082000011,https://medicub.local/images/amlong5.png
+DRUG002,Telma-AM 40/5,Glenmark Pharmaceuticals,tablet,oral,8901082000028,https://medicub.local/images/telma_am.png
+DRUG003,Stamlo 5,Dr. Reddy's Laboratories,tablet,oral,8901082000035,https://medicub.local/images/stamlo5.png
+DRUG004,Glycomet 500,USV Pvt Ltd,tablet,oral,8901082000042,https://medicub.local/images/glycomet500.png
+DRUG005,Cardace 5,Sanofi India,tablet,oral,8901082000059,https://medicub.local/images/cardace5.png
+DRUG006,Telma 40,Glenmark Pharmaceuticals,tablet,oral,8901082000066,https://medicub.local/images/telma40.png
+DRUG007,Atorva 10,Zydus Healthcare,tablet,oral,8901082000073,https://medicub.local/images/atorva10.png
+DRUG008,Amlong 10,Micro Labs Ltd,tablet,oral,8901082000080,https://medicub.local/images/amlong10.png
+DRUG009,Cilacar 10,J.B. Chemicals,tablet,oral,8901082000097,https://medicub.local/images/cilacar10.png
+DRUG010,Losar 50,Unichem Laboratories,tablet,oral,8901082000103,https://medicub.local/images/losar50.png
+DRUG011,Amlokind 5,Mankind Pharma,tablet,oral,8901082000110,https://medicub.local/images/amlokind5.png
+DRUG012,Combiflam,Sanofi India,tablet,oral,8901082000127,https://medicub.local/images/combiflam.png

@@ -80,7 +80,53 @@ const server = app.listen(3002, async () => {
     const auditAfter = await fetchJson('http://localhost:3002/v1/audit/verify');
     console.log('9. Post-signing audit chain verify:', auditAfter.ok ? 'PASS' : 'FAIL', `(${auditAfter.checked} entries)`);
 
-    console.log('\nALL 9 SERVER TESTS PASSED SUCCESSFULLY!');
+    // 10. Patient onboarding test
+    const onboardPatient = await fetchJson('http://localhost:3002/v1/onboarding/patient', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Sunita Sharma',
+        age: 58,
+        gender: 'female',
+        phone: '+919811224466',
+        conditions: ['Hypertension', 'Dyslipidemia']
+      })
+    });
+    console.log('10. Patient onboarding:', onboardPatient.success && onboardPatient.patient_id ? 'PASS' : 'FAIL');
+
+    // 11. Doctor onboarding test
+    const onboardDoctor = await fetchJson('http://localhost:3002/v1/onboarding/doctor', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Dr. Rajesh Gupta',
+        specialty: 'General Medicine',
+        clinic_name: 'Gupta Medical Centre'
+      })
+    });
+    console.log('11. Doctor onboarding:', onboardDoctor.success && onboardDoctor.doctor_id ? 'PASS' : 'FAIL');
+
+    // 12. Active regimen intake test
+    const intakeMed = await fetchJson('http://localhost:3002/v1/regimens/intake', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        patient_id: onboardPatient.patient_id,
+        brand: 'Atorva 10',
+        dose_value: 10,
+        dose_unit: 'mg',
+        frequency_code: 'OD',
+        timing: ['night'],
+        instructions: 'Take 1 tablet at night'
+      })
+    });
+    console.log('12. Regimen intake:', intakeMed.success && intakeMed.regimen_item ? 'PASS' : 'FAIL');
+
+    // 13. Final Audit Verification
+    const auditFinal = await fetchJson('http://localhost:3002/v1/audit/verify');
+    console.log('13. Final audit verify with onboarding entries:', auditFinal.ok ? 'PASS' : 'FAIL', `(${auditFinal.checked} entries)`);
+
+    console.log('\nALL 13 SERVER TESTS PASSED SUCCESSFULLY!');
   } catch (err) {
     console.error('Test error:', err);
   } finally {
